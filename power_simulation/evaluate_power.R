@@ -24,6 +24,15 @@ tmp_bf<- results_dat %>%
    summarize(meanBF_WHRb=1/mean(`age_change.WHR_base`),
           meanBF_SBPb=1/mean(`age_change.SBP_base`),
           meanBF_WHRc=1/mean(`WHR_change`),
-          meanBF_SBPc=1/mean(`SBP_change`))
+          meanBF_SBPc=1/mean(`SBP_change`))%>%
+
+tmp_bf_one_sided<- results_dat %>%  
+  filter(value == "one_sided_BF")%>%
+  group_by(nsample)%>%
+  summarize(meanBF_one_sided_WHRb=1/mean(`age_change.WHR_base`),
+            meanBF_one_sided_SBPb=1/mean(`age_change.SBP_base`),
+            meanBF_one_sided_WHRc=1/mean(`WHR_change`),
+            meanBF_one_sided_SBPc=1/mean(`SBP_change`))
 #
- write.csv(tmp_bf,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/bf_400_600_800_100sim.csv")
+write.csv(tmp_bf,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/bf_400_600_800_100sim.csv")
+write.csv(tmp_bf_one_sided,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/bf_one_sided_400_600_800_100sim.csv")

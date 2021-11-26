@@ -8,9 +8,8 @@ library(broom.mixed)
 setwd("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/analysis") #set path to github repository here
 source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/diagnostic_fcns.r")
 source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/glmm_stability.r")
-source("simulate_data.R")
-source('../functions/run_LME_realdata.R')
-source('../functions/test_LME_assumptions.R')
+source('run_LME_realdata.R')
+source('test_LME_assumptions.R')
 
 miceadds::load.Rdata(objname = "imp", "/data/pt_life_whm/Results/Tables/imputed_data/imputed_data.Rdata")
 ####################################################

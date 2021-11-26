@@ -5,10 +5,11 @@ library(car)
 # ensure that lmerTest doesn't mask lmer, which would cause us multiple problems
 lmer <- lme4::lmer
 
-setwd("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/simulations") #set path to github repository here
+setwd("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/power_simulation/") #set path to github repository here
 source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/diagnostic_fcns.r")
 source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/glmm_stability.r")
-source('../analysis/run_LME_simulation.R')
+source('run_LME_simulation.R')
+source('simulate_data.R')
 
 
 ### Simulate power curves for SBP
@@ -162,10 +163,11 @@ for (n in n_sample){#,800 #number of subjects
         #Calculate model
         res_list=run_LME('asinh_ll', dat, 'simple')
         
-        #Extract p-values, effect estimates and BF
+        #Extract p-values, effect estimates, two-sided and one-sided BF for
+        #predictors age_change:WHR_base, age_change:SBP_base, WHR_change, SBP_change
         results_vec=append(results_vec,res_list[3][[1]][c(11,10,7,5),5])
         results_vec=append(results_vec,res_list[3][[1]][c(11,10,7,5),1])
-        results_vec=append(results_vec,res_list[[4]][c(1:4),1])#age_change:WHR_base, age_change:SBP_base, WHR_change, SBP_change
+        results_vec=append(results_vec,res_list[[4]][c(1:4),c(1,5)])
         
         #Plot the simulated data as visual control
         #dat$tertiles=as.factor(ntile(dat$SBP_base,3))
@@ -189,9 +191,9 @@ for (n in n_sample){#,800 #number of subjects
 results_mat <- matrix(results_vec, byrow=T, nrow=n_sim*length(n_sample)*3)
 results_dat=as.data.frame(results_mat)
 colnames(results_dat)=c("age_change:WHR_base", "age_change:SBP_base", "WHR_change", "SBP_change")
-results_dat$value=rep(c("p_value", "effect_size", "BF"),n_sim)
+results_dat$value=rep(c("p_value", "effect_size", "BF", "one_sided_BF"),n_sim)
 results_dat$nsim=rep(c(1:n_sim),each=3)
 results_dat$nsample=rep(n_sample, each=3*n_sim)
-write.csv(results_dat,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_100sim.csv")
+write.csv(results_dat,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_100sim_onesidedBF.csv")
 
 

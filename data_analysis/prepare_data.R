@@ -275,15 +275,21 @@ medianam_bl<- read_excel("/data/pt_life/ResearchProjects/LLammer/Data/data/Basel
 # make sure no hashtags are around ACT-codes
 medianam_bl$ADULT_MEDA_H_ATC <- str_replace_all(medianam_bl$ADULT_MEDA_H_ATC, "#", "") 
 
-to_match <- c("^M03B", ", M03B", "^N06DA", ", N06DA", "^N06DX", ", N06DX", "^N05A", ", N05A", "^N06B", ", N06B", "^N05CA", ", N05CA", "^N05CB", 
-              ", N05CB", "^N05CC", ", N05CC", "^N05CD", ", N05CD", "^N05CE", ", N05CE", "^N05CF", ", N05CF", "^N05CH", ", N05CH", "^N05CM", ", N05CM", "^N05CX", 
-              ", N05CX", "^N05CP02", ", N05CP02", "^N05CP03", ", N05CP03", 
-              "^N02CA", ", N02CA", "^N02CB", ", N02CB", "^N02CC", ", N02CC", "^N02CD", ", N02CD", "^N02CX", ", N02CX", 
-              "^N06AA", ", N06AA", "^N06AB", ", N06AB", "^N06AF", ", N06AF", "^N06AG", ", N06AG", "^N06AP", ", N06AP", "^N06AX", ", N06AX", 
-              "^N05BA", ", N05BA", "^N05BB", ", N05BB", "^N05BC", ", N05BC", "^N05BD", ", N05BD", 
-              "^N05BE", ", N05BE", "^N05BX", ", N05BX", "^N05BP02", ", N05BP02",
-              "^N02A", ", N02A", "^N03", ", N03", "^N07A", ", N07A", "^N07CA", 
-              ", N07CA", "^N04", ", N04", "^R05DA", ", R05DA")
+to_match <- c("^M03B", "M03B", 
+              "^N02A", "N02A", "^N03", "N03", "^N07A", "N07A", "^N07CA", 
+              "^N02CA", "N02CA", "^N02CB", "N02CB", "^N02CC", "N02CC", "^N02CD", "N02CD", "^N02CX", "N02CX", 
+              "^N04", "N04",
+              "^N06DA", "N06DA", "^N06DX01", "N06DX01", "^N06DX30", "N06DX30", 
+              "^N06B", "N06B", 
+              "^N06AA", "N06AA", "^N06AB", "N06AB", "^N06AF", "N06AF", "^N06AG", "N06AG", "^N06AP", "N06AP", "^N06AX", "N06AX", 
+              "^N05A",  "N05A", "^N05CA", "N05CA", "^N05CB", 
+              "^N05BA", "N05BA", "^N05BB", "N05BB", "^N05BC", "N05BC", "^N05BD", "N05BD",
+              "^N05BE", "N05BE", "^N05BX", "N05BX", "^N05BP02", "N05BP02",
+              "N05CB", "^N05CC", "N05CC", "^N05CD", "N05CD", "^N05CE", 
+              "N05CE", "^N05CF", "N05CF", "^N05CH", "N05CH", "^N05CM", 
+              "N05CM", "^N05CX", "N05CX", "^N05CP02", "N05CP02", "^N05CP03", ", N05CP03", 
+              "N07CA",  
+              "^R05DA", "R05DA")
 medianam_bl <- medianam_bl %>%
   mutate(centr_act_med_bl = case_when(
     grepl(paste0(to_match, collapse = "|"), ADULT_MEDA_H_ATC) ~ 1,
@@ -316,15 +322,21 @@ medianam_fu <- read_excel("/data/pt_life/ResearchProjects/LLammer/Data/data/Foll
 
 medianam_fu$ADULT_MEDA_H_ATC <- str_replace_all(medianam_fu$ATC, ",", ", ")
 medianam_fu$ADULT_MEDA_H_ATC <- str_replace_all(medianam_fu$ADULT_MEDA_H_ATC, "#", "") 
-to_match <- c("^M03B", ", M03B", "^N06DA", ", N06DA", "^N06DX", ", N06DX", "^N05A", ", N05A", "^N06B", ", N06B", "^N05CA", ", N05CA", "^N05CB", 
-              ", N05CB", "^N05CC", ", N05CC", "^N05CD", ", N05CD", "^N05CE", ", N05CE", "^N05CF", ", N05CF", "^N05CH", ", N05CH", "^N05CM", ", N05CM", "^N05CX", 
-              ", N05CX", "^N05CP02", ", N05CP02", "^N05CP03", ", N05CP03", 
-              "^N02CA", ", N02CA", "^N02CB", ", N02CB", "^N02CC", ", N02CC", "^N02CD", ", N02CD", "^N02CX", ", N02CX", 
-              "^N06AA", ", N06AA", "^N06AB", ", N06AB", "^N06AF", ", N06AF", "^N06AG", ", N06AG", "^N06AP", ", N06AP", "^N06AX", ", N06AX", 
-              "^N05BA", ", N05BA", "^N05BB", ", N05BB", "^N05BC", ", N05BC", "^N05BD", ", N05BD", 
-              "^N05BE", ", N05BE", "^N05BX", ", N05BX", "^N05BP02", ", N05BP02",
-              "^N02A", ", N02A", "^N03", ", N03", "^N07A", ", N07A", "^N07CA", 
-              ", N07CA", "^N04", ", N04", "^R05DA", ", R05DA")
+to_match <- c("^M03B", "M03B", 
+              "^N02A", "N02A", "^N03", "N03", "^N07A", "N07A", "^N07CA", 
+              "^N02CA", "N02CA", "^N02CB", "N02CB", "^N02CC", "N02CC", "^N02CD", "N02CD", "^N02CX", "N02CX", 
+              "^N04", "N04",
+              "^N06DA", "N06DA", "^N06DX01", "N06DX01", "^N06DX30", "N06DX30", 
+              "^N06B", "N06B", 
+              "^N06AA", "N06AA", "^N06AB", "N06AB", "^N06AF", "N06AF", "^N06AG", "N06AG", "^N06AP", "N06AP", "^N06AX", "N06AX", 
+              "^N05A",  "N05A", "^N05CA", "N05CA", "^N05CB", 
+              "^N05BA", "N05BA", "^N05BB", "N05BB", "^N05BC", "N05BC", "^N05BD", "N05BD",
+              "^N05BE", "N05BE", "^N05BX", "N05BX", "^N05BP02", "N05BP02",
+              "N05CB", "^N05CC", "N05CC", "^N05CD", "N05CD", "^N05CE", 
+              "N05CE", "^N05CF", "N05CF", "^N05CH", "N05CH", "^N05CM", 
+              "N05CM", "^N05CX", "N05CX", "^N05CP02", "N05CP02", "^N05CP03", ", N05CP03", 
+              "N07CA",  
+              "^R05DA", "R05DA")
 medianam_fu<- medianam_fu %>%
   mutate(centr_act_med_fu = case_when(
     grepl(paste0(to_match, collapse = "|"), ADULT_MEDA_H_ATC) ~ 1,
@@ -787,7 +799,8 @@ test = wml_long %>%
 #inspect pattern of missingness
 mising_pattern=mice::md.pattern(test)
 
-#right now, there are missing values in Age (missing MRI data)              
+#right now, there are missing values in Age which need to be removed
+#(missing MRI data)              
 test=test[!is.na(test$age),]
 
 #Impute all NAs in this dataframe
@@ -799,8 +812,13 @@ ini$loggedEvents #logged events point out issues we know
 # indicators:
 #-2: cluster variable, 1: fixef with randint, 0: not used
 # 2: random effect of predictor which we do not have with two timepoints
+
+#Need to add WHR here once it is varying ;)
+
+colnames(test)
+
 pred <- ini$predictorMatrix
-pred["education",] <- c(-2, 0, 1, 1, 0, 0, 0,0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+pred["education",] <- c(-2, 0, 1, 1, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 pred["TIV",] <- c(-2, 0, 1, 1, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0) 
 pred["SBP",] <- c(-2, 1, 1, 1, 1, 0, 0, 0 , 1, 1,0,0,0,0,0,0,0,0,0,0,0,0,0)  
 #pred["WHR",] <- c(-2, 1, 1, 1, 1, 0, 1, 1, 0) 
@@ -839,12 +857,14 @@ imp_l <- mice::complete(imp, "long", include = TRUE)
 imp_l <- imp_l %>%
   group_by(mrt_pseudonym, .imp) %>%
   mutate(
+    subj=as.factor(subj),
     cesd = asinh(cesd),
     age_base = ifelse(time == "bl", age, lag(age)),
     SBP_base = ifelse(time == "bl", SBP, lag(SBP)),
-    #WHR_base = ifelse(time == "bl", WHR, lag(WHR))
+    #WHR_base = ifelse(time == "bl", WHR, lag(WHR)),
     age_change = ifelse(time == "bl", 0, age - age_base),
     SBP_change = ifelse(time == "bl", 0, SBP - SBP_base),
+    #WHR_change = ifelse(time == "bl", WHR - WHR_base),
     asinh_wml = asinh(wml),
     asinh_wml_base = ifelse(time == "bl", asinh_wml, lag(asinh_wml)),
     asinh_wml_change = ifelse(time == "bl", 0, asinh_wml - asinh_wml_base))
