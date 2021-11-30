@@ -13,9 +13,13 @@ source('simulate_data.R')
 
 
 ### Simulate power curves for SBP
-# Simulation parameters
-n_sim = 100
-n_sample=c(400,600,800)
+# Simulation parameters -> totaling 1600 simulations + 100 chains each
+n_sim = 50
+n_sample=c(400,600,800,1000)
+n_it=100 #chain sampling
+whr_effects=c(0.5, 1, 1.5,2) #effect sizes for WHR scaling
+
+#Outputs
 results_vec=vector()
 
 ##### Baseline effect sizes
@@ -105,18 +109,33 @@ increase_SBP_Godin=0.05/(4*5) #0.05 (0.02) cm³ per 5mmHG SBP increase between t
 SBP_change=increase_SBP_Godin
 
 ###WHR
-#Work around for baseline on progression: use baseline_SBP effect scaled by WHR/mmHg conversion
+#Obtain estimates for baseline WHR on progression: use baseline_SBP effect scaled by WHR/mmHg conversion
 
+#First calculation (probably wrong)
 #Effect of baseline WHR on WML progression in LIFE-Adult usable sample:
-#One WHR unit has cross-sectional effect of by exp(2.15) (compared to exp(0.01) for 1 mmHg SBP)
+#One WHR unit has cross-sectional effect of exp(2.15) times more WML
+#One unit of SBP is associated with exp(0.01) times more WML
 #Thus the effect of 1 mmHg is approximately the effect 1/8.5 WHR unit
 #Or 1 WHR unit has the effect of 8.5 mmHg.
 
 #We half the effect size for a conservative estimate.
-WHR_baseline=SBP_baseline*8.5/(2)
+#WHR_baseline=SBP_baseline*8.5/2
+#WHR_change=SBP_change*8.5/2
+
+#### This assumes a multiplicative model yet we construct the long effects in
+#### an additive fashion. Thus, this might be wrong.
+
+#Based on additive model of baseline data (using asinh(ll) as outcome, similar to the final models we use): 
+#where 
+model_bl=lm(asinh(lesionload/1000) ~ scale(Age_all, scale=F) + scale(ADULT_BP_SBP.1, scale=F) + 
+              scale(waist2hip, scale=F) + sex + scale(icv, scale=F), 
+            data=usable)
+additive_ratio_WHR_SBP=coefficients(model_bl)[4]/coefficients(model_bl)[3]
+
+WHR_baseline=SBP_baseline*additive_ratio_WHR_SBP
 
 #Similar for WHR change on progression
-WHR_change=SBP_change*8.5/(2)
+WHR_change=SBP_change*additive_ratio_WHR_SBP
 
 
 #Parameter constraints (random intercept and overall model error)
@@ -124,9 +143,9 @@ sd_reff=0.5 #for normal distribution with mean 0, SD = 0.5 cm³
 sd_err=1 #for normal distribution with mean 0, SD = 1 cm³  
 
 
-for (n in n_sample){#,800 #number of subjects
+for (n in n_sample){#number of subjects
     
-    for (effect in c(1)){#0.75,1,1.25
+    for (whr_effect in whr_effects){#,1,1.5,2)){#0.75,1,1.25
 
       for (i in c(1:n_sim)){#number of simulations per condition
         #set.seed(i)
@@ -142,16 +161,17 @@ for (n in n_sample){#,800 #number of subjects
         #Draw effect of SBP change from normal distribution with literature value
         effect_SBP_change=rnorm(n, mean=SBP_change, sd=0.001)
         #Draw effect of WHR baseline from normal distribution with literature value
-        effect_WHR_baseline=rnorm(n, mean=WHR_baseline, sd=0.001)
+        effect_WHR_baseline=rnorm(n, mean=whr_effect*WHR_baseline, sd=whr_effect*0.001)
         #Draw effect of WHR change from normal distribution, estimated based on 
-        effect_WHR_change=rnorm(n, mean=WHR_change, sd=0.001)
+        effect_WHR_change=rnorm(n, mean=whr_effect*WHR_change, sd=whr_effect*0.001)
 
           
         #Simulate
+        
         dat=simncalc(n, 
                      coeffs_bl, covmatrix, usable, mean_diff_y, sd_diff_y,
-                     effect_age_change, sd_age_change, effect_SBP_baseline, WHR_baseline, 
-                     effect_SBP_change, WHR_change, sd_reff, sd_err)
+                     effect_age_change, sd_age_change, effect_SBP_baseline, effect_WHR_baseline, 
+                     effect_SBP_change, WHR_change, sd_reff, sd_err=sd_err)
         dat=as.data.frame(dat)
         scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm))
         dat <- dat %>% mutate_at(c("age_base", "SBP_base", "WHR_base", "icv"), scale2)
@@ -161,7 +181,7 @@ for (n in n_sample){#,800 #number of subjects
         dat$asinh_ll=asinh(dat$dv)
         
         #Calculate model
-        res_list=run_LME('asinh_ll', dat, 'simple')
+        res_list=run_LME('asinh_ll', dat, 'simple', n_it)
         
         #Extract p-values, effect estimates, two-sided and one-sided BF for
         #predictors age_change:WHR_base, age_change:SBP_base, WHR_change, SBP_change
@@ -170,16 +190,23 @@ for (n in n_sample){#,800 #number of subjects
         results_vec=append(results_vec,res_list[[4]][c(1:4),c(1,5)])
         
         #Plot the simulated data as visual control
+        #dat$tertiles=as.factor(ntile(dat$WHR_base,4))
         #dat$tertiles=as.factor(ntile(dat$SBP_base,3))
         #ggplot(dat, aes(x = age_base+age_change, y = asinh_ll, group=tertiles, color = tertiles)) +
         #  geom_point(aes(group=id))+
         #  geom_smooth(method = "lm")
         #ggsave(paste0("/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/SBP_baseline_sim_effectoverage_sim_",i,"_n_",n,".png"), width = 8, height=5)
         
-        #ggplot(dat, aes(x = tp, y = asinh_ll, group=tertiles, color = tertiles)) +
+        #ggplot(dat, aes(x = tp, y = WHR_effects, group=tertiles, color = tertiles)) +
         #  geom_jitter(width = 0.15, alpha=0.5)+
-        #  stat_summary(fun.y = mean, geom = "point", size=4)+
-        # stat_summary(fun.y = mean, geom = "line") 
+        #  stat_summary(fun.y = median, geom = "point", size=4)+
+        #  stat_summary(fun.y = median, geom = "line") 
+        
+        
+        #ggplot(dat, aes(x = tp, y = change_coeff, group=tertiles, color = tertiles)) +
+        #  geom_jitter(width = 0.15, alpha=0.5)+
+        #  stat_summary(fun.y = median, geom = "point", size=4)+
+        #  stat_summary(fun.y = median, geom = "line") 
         #ggsave(paste0("/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/SBP_baseline_sim_effectperTP_sim_",i,"_n_",n,".png"), width = 8, height=5)
       }
       
@@ -187,13 +214,40 @@ for (n in n_sample){#,800 #number of subjects
   }
       
 
+#Separate frequentist and Bayesian outputs
+bf_results=vector()
+freq_results=vector()
+for (elem in c(1:length(results_vec))){
+  print(elem)
+  if (names(results_vec[elem])=="bf")
+  {bf_results=append(bf_results,results_vec[elem]$bf)}
+  else if (names(results_vec[elem])=="one_sided_bf")
+  {bf_results=append(bf_results,results_vec[elem]$one_sided_bf)}
+  else {freq_results=append(freq_results,results_vec[elem])}
+}
 
-results_mat <- matrix(results_vec, byrow=T, nrow=n_sim*length(n_sample)*3)
-results_dat=as.data.frame(results_mat)
-colnames(results_dat)=c("age_change:WHR_base", "age_change:SBP_base", "WHR_change", "SBP_change")
-results_dat$value=rep(c("p_value", "effect_size", "BF", "one_sided_BF"),n_sim)
-results_dat$nsim=rep(c(1:n_sim),each=3)
-results_dat$nsample=rep(n_sample, each=3*n_sim)
-write.csv(results_dat,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_100sim_onesidedBF.csv")
+#Reorder results according to looping
+#two outcomes for freq/Bayes each: p/effect size; BF/one-sided BF
+#first loop: over simulations
+#second loop: over WHR effect size ratios
+#third loop: over participant number
 
+freq_mat <- matrix(unlist(freq_results), byrow=T, nrow=n_sim*length(n_sample)*2*length(whr_effects))
+freq_dat=as.data.frame(freq_mat)
+#foo = freq_dat %>% unlist()
+colnames(freq_dat)=c("age_change:WHR_base", "age_change:SBP_base", "WHR_change", "SBP_change")
+freq_dat$value=rep(c("p_value", "effect_size"),n_sim)
+freq_dat$nsim=rep(c(1:n_sim),each=2)
+freq_dat$whr_effects=rep(whr_effects,each=2*n_sim)
+freq_dat$nsample=rep(n_sample, each=2*n_sim*length(whr_effects))
+write.csv(freq_dat,'/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_1000_',n_sim,'_freq.csv')
+
+bf_mat <- matrix(unlist(bf_results), byrow=T, nrow=n_sim*length(n_sample)*2*length(whr_effects))
+bf_dat=as.data.frame(bf_mat)
+colnames(bf_dat)=c("age_change:WHR_base", "age_change:SBP_base", "WHR_change", "SBP_change")
+bf_dat$value=rep(c("bf", "one_sided_bf"),n_sim)
+bf_dat$nsim=rep(c(1:n_sim),each=2)
+bf_dat$whr_effects=rep(whr_effects,each=2*n_sim)
+bf_dat$nsample=rep(n_sample, each=2*n_sim*length(whr_effects))
+write.csv(bf_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_',n_sim,'_sim_bf.csv'))
 

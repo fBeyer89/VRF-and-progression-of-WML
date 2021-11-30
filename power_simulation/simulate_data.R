@@ -78,9 +78,7 @@ simncalc <- function(n,
     )
   df <- df %>%
      mutate(intercept = coeffs_bl[1])
-  # reduce dataframe to resemble actual number of baseline and follow-up obs
-  # here we could introduce some missings
-  
+
   #have to split the simulation in two parts, so that we have dv in correct units
   df <- df %>%
     plyr::mutate(
@@ -91,12 +89,18 @@ simncalc <- function(n,
         coeffs_bl[3] * scale(SBP_base, scale=F)  +
         coeffs_bl[4] * scale(WHR_base, scale=F)  + 
         coeffs_bl[5] * sex + coeffs_bl[6]*scale(icv, scale=F)),
+      long_effects= (effect_age_change + effect_SBP_baseline * scale(SBP_base, scale=F) + 
+                    effect_WHR_baseline*scale(WHR_base, scale=F)) * age_change+
+                    effect_SBP_change * SBP_change + effect_WHR_change * WHR_change,
+     
+      dv = cross_effects + long_effects + errors,
+      dv2 = cross_effects + (effect_age_change + effect_WHR_baseline*scale(WHR_base, scale=F)) * age_change,
+      #only for quality control
       change_coeff=effect_age_change + effect_SBP_baseline * scale(SBP_base, scale=F) + 
         effect_WHR_baseline*scale(WHR_base, scale=F),
-      long_effects= (effect_age_change + effect_SBP_baseline * scale(SBP_base, scale=F) + 
-                      effect_WHR_baseline*scale(WHR_base, scale=F)) * age_change+
-                      effect_SBP_change * SBP_change + effect_WHR_change * WHR_change,
-      dv = cross_effects +long_effects + errors)
+      
+      WHR_effects = effect_WHR_baseline*scale(WHR_base, scale=F)* age_change,
+      SBP_effects = effect_SBP_baseline * scale(SBP_base, scale=F)* age_change)
   return(df)
 }
 

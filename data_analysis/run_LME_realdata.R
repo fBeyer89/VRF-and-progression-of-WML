@@ -60,7 +60,7 @@ run_LME<- function(imp, model){
         # adjust the BF in favour of the alternative by p(effect size>0)/0.5 by sampling from the posterior
         # see https://gist.github.com/richarddmorey/7c1bd06a14384412f2145daee315c036 for more detail
         for (j in c(1:4)){#iterate over predictors
-        chains <- posterior(tmp_bf, j, iterations = 10)
+        chains <- posterior(tmp_bf, j, iterations = 1000)
         siding_factor <- mean(chains[,1]>0) 
         #We expect a positive effect of SBP/WHR on age change, 
         # as well as for SBP and WHR change. Because the Bayes factor from WhichModels="top"
@@ -103,7 +103,7 @@ run_LME<- function(imp, model){
       # adjust the BF in favour of the alternative by p(effect size>0)/0.5 by sampling from the posterior
       # see https://gist.github.com/richarddmorey/7c1bd06a14384412f2145daee315c036 for more detail
       for (j in c(1:2)){#iterate over predictors
-        chains <- posterior(tmp_bf, j, iterations = 10)
+        chains <- posterior(tmp_bf, j, iterations = 1000)
         siding_factor <- mean(chains[,1]<0) 
         #We expect a negative effect of baseline and change in WML
         # Because the Bayes factor from WhichModels="top"
@@ -145,7 +145,7 @@ run_LME<- function(imp, model){
         # adjust the BF in favour of the alternative by p(effect size>0)/0.5 by sampling from the posterior
         # see https://gist.github.com/richarddmorey/7c1bd06a14384412f2145daee315c036 for more detail
         for (j in c(1:2)){#iterate over predictors
-          chains <- posterior(tmp_bf, j, iterations = 10)
+          chains <- posterior(tmp_bf, j, iterations = 1000)
           siding_factor <- mean(chains[,1]<0) 
           #We expect a negative effect of baseline and change in WML
           # Because the Bayes factor from WhichModels="top"
