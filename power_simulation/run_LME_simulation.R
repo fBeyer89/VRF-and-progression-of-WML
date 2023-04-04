@@ -59,7 +59,7 @@ run_LME<- function(dv, data, model, n_it){
     #We expect a positive effect of interaction of baseline SBP and WHR with age change
     #and of change in SBP/WHR
     #Because the Bayes factor from WhichModels="top"
-    #is inverted (i.e. quantifies evidence for null),
+    #is inverted (i.e. higher BF mean more evidence for reduced/against full model),
     # the siding factor also has to be calculated inversely (quantifying evidence
     # for the opposite direction)
     bf_extracted[, "one_sided_bf"] <- bf_extracted[, "bf"] * 0.5/siding_factor

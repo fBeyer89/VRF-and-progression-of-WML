@@ -1,7 +1,7 @@
 #Calculate Power
 library(dplyr)
 
-results_dat=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_10sim_freq.csv")
+results_dat=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1/n_1000_50_freq.csv")
 n_sim=50
 tmp_power<- results_dat %>%
    filter(value == "p_value")%>%
@@ -16,7 +16,7 @@ tmp_power<- results_dat %>%
           power_SBPc=SBP_change/n_sim)
 
 tmp_power#
-write.csv(tmp_power,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/power_400_600_800_50sim.csv")
+write.csv(tmp_power,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1/power_n_1000_50_freq.csv")
 
 #average effect
 tmp_effect_size<- results_dat %>%
@@ -29,11 +29,11 @@ tmp_effect_size<- results_dat %>%
 
 
 tmp_effect_size#
-write.csv(tmp_effect_size,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/effect_size_400_600_800_50sim.csv")
+write.csv(tmp_effect_size,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1/effsize_n_1000_50_freq.csv")
 
 
 
-results_dat_bf=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_10sim_bf.csv")
+results_dat_bf=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1/n_1000_50_sim_bf.csv")
 
 tmp_bf<- results_dat_bf %>%
    filter(value == "bf")%>%
@@ -51,5 +51,5 @@ tmp_bf_one_sided<- results_dat_bf %>%
             meanBF_one_sided_WHRc=1/mean(`WHR_change`),
             meanBF_one_sided_SBPc=1/mean(`SBP_change`))
 #
-write.csv(tmp_bf,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/bf_400_600_800_50sim.csv")
-write.csv(tmp_bf_one_sided,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/bf_one_sided_400_600_800_50sim.csv")
+write.csv(tmp_bf,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1/bf_1000_50sim.csv")
+write.csv(tmp_bf_one_sided,"/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1/bf_one_sided_1000_50sim.csv")

@@ -13,11 +13,12 @@ source('simulate_data.R')
 
 
 ### Simulate power curves for SBP
-# Simulation parameters -> totaling 1600 simulations + 100 chains each
+# Simulation parameters -> totaling 400 simulations + 100 chains each
+# This means 1600 outcomes (effect size and p,bf bf_one_sided) for freq/bf
 n_sim = 50
-n_sample=c(400,600,800,1000)
-n_it=100 #chain sampling
-whr_effects=c(0.5, 1, 1.5,2) #effect sizes for WHR scaling
+n_sample=c(1000)
+n_it=10 #chain sampling
+whr_effects=c(1.5) #, 1, 1.5,2) ##effect sizes for WHR scaling
 
 #Outputs
 results_vec=vector()
@@ -157,7 +158,7 @@ for (n in n_sample){#number of subjects
         
         #Draw effects for SBP baseline, WHR baseline and SBP change from normal distributions,
         #considering effect strengths from literature
-        effect_SBP_baseline=rnorm(n, mean=SBP_baseline*effect, sd=0.001)
+        effect_SBP_baseline=rnorm(n, mean=SBP_baseline, sd=0.001)
         #Draw effect of SBP change from normal distribution with literature value
         effect_SBP_change=rnorm(n, mean=SBP_change, sd=0.001)
         #Draw effect of WHR baseline from normal distribution with literature value
@@ -240,7 +241,7 @@ freq_dat$value=rep(c("p_value", "effect_size"),n_sim)
 freq_dat$nsim=rep(c(1:n_sim),each=2)
 freq_dat$whr_effects=rep(whr_effects,each=2*n_sim)
 freq_dat$nsample=rep(n_sample, each=2*n_sim*length(whr_effects))
-write.csv(freq_dat,'/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_1000_',n_sim,'_freq.csv')
+write.csv(freq_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1.5/n_1000_',n_sim,'_freq.csv'))
 
 bf_mat <- matrix(unlist(bf_results), byrow=T, nrow=n_sim*length(n_sample)*2*length(whr_effects))
 bf_dat=as.data.frame(bf_mat)
@@ -249,5 +250,5 @@ bf_dat$value=rep(c("bf", "one_sided_bf"),n_sim)
 bf_dat$nsim=rep(c(1:n_sim),each=2)
 bf_dat$whr_effects=rep(whr_effects,each=2*n_sim)
 bf_dat$nsample=rep(n_sample, each=2*n_sim*length(whr_effects))
-write.csv(bf_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/n_400_600_800_',n_sim,'_sim_bf.csv'))
+write.csv(bf_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1.5/n_1000_',n_sim,'_sim_bf.csv'))
 
