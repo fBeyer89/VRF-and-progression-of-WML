@@ -19,20 +19,20 @@ colnames(wml)[1]="mrt_pseudonym"
 ############################################################################
 #  Add PV-specific pseudonyms to the MRI pseudonyms
 ############################################################################
-pv_ids=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2021_01_PV573_life_data/full_data/PV573_PV-MRT-Pseudonymliste.xlsx")
+pv_ids=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/PV609_mrt_pseudonyme_2023-02-03.xlsx")
 wml=merge(wml[,c("mrt_pseudonym", "qa_check", "qa_comment", "wml_vol_bl", "wml_vol_fu")], pv_ids, by="mrt_pseudonym", all.x=T)
 
 ############################################################################
 #  Add SIC pseudonyms to the MRI pseudonyms
 ############################################################################
-sic_pseudo=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2021_sic_pseudonyms/pseudo_mrt_20201214.xlsx")
+sic_pseudo=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Preprocessed/derivatives/pseudo_mrt_20201214.xlsx")
 wml=merge(wml, sic_pseudo, all.x=T, by.x="mrt_pseudonym", by.y="pseudonym")
 
 ############################################################################
 #  Load baseline demographics
 ############################################################################
 # load data on participants' sex and birth date
-basic <- readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_R00001.xlsx")
+basic <- readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_R00001.xlsx")
 
 # rename variables to allow merging and merge
 basic <- basic %>%
@@ -49,7 +49,7 @@ wml=merge(wml, basic[,c("pv_pseudonym", "sex", "birth")], by="pv_pseudonym", all
 ############################################################################
 #  Load education (contains duplicates)
 ############################################################################
-demo <- read_excel("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_D00140_NODUP.xlsx")
+demo <- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_D00140_NODUP.xlsx")
 #remove duplicates (assuming that education was the same at both timepoints)
 demo = demo[!duplicated(demo$SIC),]
 # categorise participants with less than a tertiary degree (score below 3.6) as 1 in a variable called education
@@ -60,8 +60,8 @@ wml=merge(wml, demo[,c("pv_pseudonym", "education")], by = "pv_pseudonym", all.x
 
 ##########################################################################
 # Load MRI dates (for LST, the earlier scan ("bl") was always selected)
-MRI_bl=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00197_NODUP.xlsx")
-MRI_fu=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup/pv573/PV0573_T01158_NODUP.xlsx")
+MRI_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00197_NODUP.xlsx")
+MRI_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1//PV0609_T01158_NODUP.xlsx")
 MRI_bl$MRT_DATUM_bl <- as.Date(MRI_bl$MRT_DATUM)
 
 # For controlling that earlier time point was selected.
@@ -84,10 +84,10 @@ wml=merge(wml, MRI_fu[,c("MRT_ZW_U_SIC","MRT_DATUM_fu")], by.x="pv_pseudonym", b
 #  Load medication, medical anamnese and radiological assessment data
 #  for Exclusion
 ############################################################################
-medanam_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2021_01_PV573_life_data/full_data/Baseline/PV0573_T00173_NODUP.xlsx")
-medanam_fu=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup/pv573/pv0573_meddanam_20210511.xlsx")
+medanam_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00173_NODUP.xlsx")
+medanam_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00173_NODUP.xlsx")
 #("T01228.xlsx")
-kardanam_fu <- read_excel("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup/pv573/pv0573_kardanam_20210511.xlsx")
+kardanam_fu <- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_kardanam_20210511.xlsx")
 
 # rename medical anamnesis labels to make them understandable
 medanam_bl <- medanam_bl %>%
@@ -143,7 +143,7 @@ wml=merge(wml, medanam_fu_wo_duplicates[,c("pseudonym","dat_medanam_fu", "epilep
 wml=merge(wml, kardanam_fu_wo_duplicates[,c("pseudonym", "dat_kardanam_fu", "stroke_fu", "hyp_treat_fu")], by.x="pv_pseudonym", by.y="pseudonym",all.x=T)
 
 ## MMSE score
-sidam_bl=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2018_01_PV168_Update/data/PV0168_T00043_NODUP.xlsx")
+sidam_bl=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00043_NODUP.xlsx")
 colnames(sidam_bl)[1]="SIC"
 a <- c("SIDAM1_")
 b <- c("1", "2", "3", "4", "5", 
@@ -181,7 +181,7 @@ sidam_bl_wo_duplicates <-
 # plot(test$MMSE, test$MMST_MMST)
 
 ###
-sidam_fu=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2018_01_PV168_Update/data/PV0168_T00043_NODUP.xlsx")
+sidam_fu=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00043_NODUP.xlsx")
 a <- c("SIDAM1_")
 b <- c("1", "2", "3", "4", "5", 
        "7", "8", "9", "10", "11", 
@@ -270,7 +270,7 @@ wml=merge(wml, radio_fu[,c("pseudonym_fu", "exclude_usable_fu",
 # N04 - parkinson's disease medication
 # R05DA - opium alkaloids and derivatives
 
-medianam_bl<- read_excel("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_D00038_NODUP.xlsx")
+medianam_bl<- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_D00038_NODUP.xlsx")
 
 # make sure no hashtags are around ACT-codes
 medianam_bl$ADULT_MEDA_H_ATC <- str_replace_all(medianam_bl$ADULT_MEDA_H_ATC, "#", "") 
@@ -369,83 +369,82 @@ wml=merge(wml, medianam_fu_wo_duplicates[,c("PSEUDONYM", "centr_act_med_fu", "BP
 #Rule for missing/implausible/wrong values: impute in multi-level imputation
 #Exclusion of participant if both time points are missing.
 ############################################################################
-#Blood pressure
-bp_bl=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00049_NODUP.xlsx")
+#Blood pressure (after revision DBP; from derivative not raw data)
+bp_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_D00073_NODUP.xlsx")
 
 # Replace all missing or wrong values with NA
-bp_bl<- replace_with_na_at(bp_bl, c("BLUTDRUCKMESS_F0024", "BLUTDRUCKMESS_F0019", "BLUTDRUCKMESS_F0014",
-                                    "BLUTDRUCKMESS_F0015", "BLUTDRUCKMESS_F0020", "BLUTDRUCKMESS_F0025"), ~.x %in% c(998, 996))
+bp_bl<- replace_with_na_at(bp_bl, c("ADULT_BP_DBP", "ADULT_BP_SBP"), ~.x %in% c(998, 996))
 
-bp_bl$SBP_bl <- (bp_bl$BLUTDRUCKMESS_F0024 + bp_bl$BLUTDRUCKMESS_F0019 + bp_bl$BLUTDRUCKMESS_F0014)/3
-bp_bl$DBP_bl <- (bp_bl$BLUTDRUCKMESS_F0025 + bp_bl$BLUTDRUCKMESS_F0020 + bp_bl$BLUTDRUCKMESS_F0015)/3 #VERIFY
+#bp_bl$SBP_bl <- (bp_bl$BLUTDRUCKMESS_F0024 + bp_bl$BLUTDRUCKMESS_F0019 + bp_bl$BLUTDRUCKMESS_F0014)/3
+#bp_bl$DBP_bl <- (bp_bl$BLUTDRUCKMESS_F0025 + bp_bl$BLUTDRUCKMESS_F0020 + bp_bl$BLUTDRUCKMESS_F0015)/3 #VERIFY
 
 bp_bl= bp_bl %>%
-  mutate(SBP_bl = case_when(
-    SBP_bl > 220  ~ NA_real_,
-    SBP_bl < DBP_bl ~ NA_real_,
-    TRUE ~ SBP_bl))
+  mutate(ADULT_BP_DBP = case_when(
+    ADULT_BP_DBP > 140  ~ NA_real_,
+    ADULT_BP_SBP < ADULT_BP_DBP ~ NA_real_,
+    TRUE ~ ADULT_BP_DBP))
 
 #Remove duplicates
 bp_bl_wo_duplicates <-
   bp_bl %>%
-  arrange(BLUTDRUCKMESS_DATUM) %>%
+  arrange(ADULT_BP_S010063_DATUM) %>%
   filter(!duplicated(.[["SIC"]]))
 
 # SBP followup
-bp_fu=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00049_NODUP.xlsx")
+bp_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T01170_NODUP.xlsx")
 
 # Replace all missing or wrong values with NA
-bp_fu<- replace_with_na_at(bp_fu, c("BLUTDRUCKMESS_F0024", "BLUTDRUCKMESS_F0019", "BLUTDRUCKMESS_F0014",
-                                    "BLUTDRUCKMESS_F0015", "BLUTDRUCKMESS_F0020", "BLUTDRUCKMESS_F0025"), ~.x %in% c(998, 996))
+bp_fu<- replace_with_na_at(bp_fu, c("BP_F0024", "BP_F0019", "BP_F0014",
+                                    "BP_F0015", "BP_F0020", "BP_F0025"), ~.x %in% c(998, 996))
 
-bp_fu$SBP_fu <- (bp_fu$BLUTDRUCKMESS_F0024 + bp_fu$BLUTDRUCKMESS_F0019 + bp_fu$BLUTDRUCKMESS_F0014)/3
-bp_fu$DBP_fu <- (bp_fu$BLUTDRUCKMESS_F0025 + bp_fu$BLUTDRUCKMESS_F0020 + bp_fu$BLUTDRUCKMESS_F0015)/3 #VERIFY
+bp_fu$SBP_fu <- (bp_fu$BP_F0024 + bp_fu$BP_F0019 + bp_fu$BP_F0014)/3
+bp_fu$DBP_fu <- (bp_fu$BP_F0025 + bp_fu$BP_F0020 + bp_fu$BP_F0015)/3 #VERIFY
 
 bp_fu= bp_fu %>%
-  mutate(SBP_fu = case_when(
-    SBP_fu > 220  ~ NA_real_,
+  mutate(DBP_fu = case_when(
+    DBP_fu > 140  ~ NA_real_,
     SBP_fu < DBP_fu ~ NA_real_,
-    TRUE ~ SBP_fu))
+    TRUE ~ DBP_fu))
 
 #Remove duplicates ##NEEDS TO BE CHECKED FOR 2nd BP measurement
 bp_fu_wo_duplicates <-
   bp_fu %>%
-  arrange(BLUTDRUCKMESS_DATUM) %>%
+  arrange(BP_DATUM) %>%
   filter(!duplicated(.[["SIC"]]))
 
 #WHR
 #Using derivative
-#whr_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2021_01_PV573_life_data/full_data/Baseline/PV0573_D00074_NODUP.xlsx")
+whr_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_D00074_NODUP.xlsx")
 
 #Using Raw data
-whr_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2019_PV465_Evelyn/data/PV0465_T00047_NODUP.xlsx")
+#whr_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2019_PV465_Evelyn/data/PV0465_T00047_NODUP.xlsx")
 
 # Replace all missing or wrong values in waist and hip with NA
-whr_bl<- replace_with_na_at(whr_bl, c("ANTHRO_F0012",  
-                                      "ANTHRO_F0015"), ~.x %in% c(999, 998, 996))
+#whr_bl<- replace_with_na_at(whr_bl, c("ANTHRO_F0012",  
+#                                      "ANTHRO_F0015"), ~.x %in% c(999, 998, 996))
 
-whr_bl$WHR_bl <- (whr_bl$ANTHRO_F0012)/
-                 (whr_bl$ANTHRO_F0015)
+#whr_bl$WHR_bl <- (whr_bl$ANTHRO_F0012)/
+#                 (whr_bl$ANTHRO_F0015)
 
 # Identify biologically implausible values to be imputed
 whr_bl= whr_bl %>%
-  mutate(WHR_bl = case_when(
-    WHR_bl < 0.5  ~ NA_real_,
-    WHR_bl > 1.5 ~ NA_real_,
-    TRUE ~ WHR_bl))
+  mutate(whr_bl = case_when(
+    BMI_WAIST_HIP_RATIO < 0.5  ~ NA_real_,
+    BMI_WAIST_HIP_RATIO > 1.5 ~ NA_real_,
+    TRUE ~ BMI_WAIST_HIP_RATIO))
 
 whr_bl_wo_duplicates <-
   whr_bl %>%
-  arrange(ANTHRO_DATUM) %>%
-  filter(!duplicated(.[["ANTHRO_SIC"]]))
+  arrange(BMI_S010061_DATUM) %>%
+  filter(!duplicated(.[["SIC"]]))
 
 ####
-whr_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2021_PV599_Frauke_HeadMotion/pv599/PV0599_T01169_NODUP.xlsx")
+whr_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T01169_NODUP.xlsx")
 
 # Replace all missing or wrong values in waist and hip with NA
-whr_fu<- replace_with_na_at(whr_fu, c("ANTHRO_TAILLE", "ANTHRO_HUEFTE"), ~.x %in% c(999, 996))
+whr_fu<- replace_with_na_at(whr_fu, c("ANTHRO_F0027", "ANTHRO_F0028"), ~.x %in% c(999, 996))
 
-whr_fu$WHR_fu <- (whr_fu$ANTHRO_TAILLE/whr_fu$ANTHRO_HUEFTE)
+whr_fu$WHR_fu <- (whr_fu$ANTHRO_F0027/whr_fu$ANTHRO_F0028)
 
 # Identify biologically implausible values to be imputed
 whr_fu= whr_fu %>%
@@ -456,14 +455,14 @@ whr_fu= whr_fu %>%
 
 wml=merge(wml, bp_bl_wo_duplicates[,c("SIC", "SBP_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
 wml=merge(wml, bp_fu_wo_duplicates[,c("SIC", "SBP_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
-wml=merge(wml, whr_bl_wo_duplicates[,c("ANTHRO_SIC", "WHR_bl")], by.x="pv_pseudonym", by.y="ANTHRO_SIC", all.x=T)
-wml=merge(wml, whr_fu[,c("ANTHRO_SIC", "WHR_fu")], by.x="pv_pseudonym", by.y="ANTHRO_SIC", all.x=T)
+wml=merge(wml, whr_bl_wo_duplicates[,c("SIC", "WHR_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
+wml=merge(wml, whr_fu[,c("SIC", "WHR_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
 
 #Cognitive Scores
-cerad_bl=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00044_NODUP.xlsx") 
-cerad_bl_anim=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00042_NODUP.xlsx") 
-cerad_bl_tmt=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00041_NODUP.xlsx")
-cerad_bl_young=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00195_NODUP.xlsx")
+cerad_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00044_NODUP.xlsx") 
+cerad_bl_anim=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00042_NODUP.xlsx") 
+cerad_bl_tmt=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00041_NODUP.xlsx")
+#cerad_bl_young=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00195_NODUP.xlsx")
 
 #remove duplicates
 cerad_bl_wo_duplicates <-
@@ -478,21 +477,21 @@ cerad_bl_tmt_wo_duplicates <-
   cerad_bl_tmt %>%
   arrange(TMT_DATUM) %>%
   filter(!duplicated(.[["SIC"]]))
-cerad_bl_young_wo_duplicates <-
-  cerad_bl_young %>%
-  arrange(WORTLISTE_DATUM) %>%
-  filter(!duplicated(.[["SIC"]]))
-colnames(cerad_bl_young_wo_duplicates)[2]="CERAD_DATUM"
+#cerad_bl_young_wo_duplicates <-
+#  cerad_bl_young %>%
+#  arrange(WORTLISTE_DATUM) %>%
+#  filter(!duplicated(.[["SIC"]]))
+#colnames(cerad_bl_young_wo_duplicates)[2]="CERAD_DATUM"
 
 #Only duplicated in cerad_fu (where the earlier one seems to be the correct one)
-cerad_fu=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup/PV573_Lammer/PV0573_T00044.xlsx") 
-cerad_fu_anim=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup/PV573_Lammer/PV0573_T00042_NODUP.xlsx") 
-cerad_fu_tmt=readxl::read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup/PV573_Lammer/PV0573_T00041_NODUP.xlsx") 
+cerad_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00044_NODUP.xlsx") 
+cerad_fu_anim=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00042_NODUP.xlsx") 
+cerad_fu_tmt=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00041_NODUP.xlsx") 
 
 cerad_fu_wo_duplicates <-
   cerad_fu %>%
   arrange(CERAD_DATUM) %>%
-  filter(!duplicated(.[["CERAD_SIC"]]))
+  filter(!duplicated(.[["SIC"]]))
 
 ############################################################
 # Functions to calculate cognition from questionnaires
@@ -633,7 +632,7 @@ wml = wml %>% mutate(BPmed_fu_n = case_when(
 ####################
 #CESD
 ####################
-cesd_bl=read_xlsx("/data/pt_life/ResearchProjects/LLammer/Data/data/Baseline/PV0573_T00013_NODUP.xlsx")
+cesd_bl=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00013_NODUP.xlsx")
 CESD_cols <- sprintf("CES_D_%s",seq(1:20))
 cesd_bl$CESD_sum_bl <- rowSums(cesd_bl[,CESD_cols])
 
@@ -646,17 +645,17 @@ cesd_bl_wo_duplicates <-
 #cesd_bl = cesd_bl %>%
 #  mutate(cesd_bl =CES_D_SCORE_SUM_CES_D)
 
-#cesd_fu=read_xlsx("")
-#CESD_cols <- sprintf("CES_D_%s",seq(1:20))
-#cesd_fu$CESD_sum_fu <- rowSums(cesd_fu[,CESD_cols])
+cesd_fu=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00013_NODUP.xlsx")
+CESD_cols <- sprintf("CES_D_%s",seq(1:20))
+cesd_fu$CESD_sum_fu <- rowSums(cesd_fu[,CESD_cols])
 
-#cesd_fu_wo_duplicates <-
-#  cesd_fu %>%
-#  arrange(CES_D_DATUM) %>%
-#  filter(!duplicated(.[["SIC"]]))
+cesd_fu_wo_duplicates <-
+  cesd_fu %>%
+  arrange(CES_D_DATUM) %>%
+  filter(!duplicated(.[["SIC"]]))
 
 wml=merge(wml, cesd_bl_wo_duplicates[,c("SIC", "CESD_sum_bl")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
-#wml=merge(wml, cesd_fu_wo_duplicates[,c("SIC", "CESD_sum_fu")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
+wml=merge(wml, cesd_fu_wo_duplicates[,c("SIC", "CESD_sum_fu")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
 
 #temporary fix
 wml$CESD_sum_fu=wml$CESD_sum_bl
@@ -666,8 +665,8 @@ wml$CESD_sum_fu=wml$CESD_sum_bl
 #TIV
 ############################################################################
 #load aseg data
-aseg <- read.table("/data/pt_life/ResearchProjects/LLammer/Data/aseg_stats.txt", header = T, sep = "\t")
-aseg$fu <- ifelse(grepl("_fu", aseg$Measure.volume), 1, 0)
+aseg <- read.table("/data/gh_gr_agingandobesity_share/life_shared/Data/Preprocessed/derivatives/FreeSurfer/CortParc_SegResults_baseline/FS_results_subcor_LIFE.txt", header = T, sep = "\t")
+#aseg$fu <- ifelse(grepl("_fu", aseg$Measure.volume), 1, 0)
 aseg$mrt_pseudonym <- substr(aseg$Measure.volume, 1, 10)
 aseg$TIV <- scale(aseg$EstimatedTotalIntraCranialVol)[,1]
 

@@ -20,9 +20,11 @@ run_LME<- function(dv, data, model, n_it){
 
   }
   if(dv=='log_ll'|dv=='asinh_ll' && model=="simple"){
-    res <- lmerTest::lmer(formula = paste0(dv, '~ age_base + age_change + 
-                                 SBP_base + age_change:SBP_base + SBP_change  + WHR_base + WHR_base:age_change + WHR_change + 
-                                 sex + icv + (1|id)'),
+    res <- lmerTest::lmer(formula = paste0(dv, '~ age_base + age_change +
+                                                                age_change:sex +
+                                                                SBP_base + age_change:SBP_base + SBP_change +
+                                                                sex:WHR_base + sex:age_change:WHR_base + 
+                                                                WHR_base + WHR_base:age_change + WHR_change + icv + (1|id)'),
                 data=data, REML=F, na.action = na.omit)
     sres=summary(res)
     coeffs=sres$coefficients
@@ -32,18 +34,30 @@ run_LME<- function(dv, data, model, n_it){
     #(Order of dropped coefficients: age_change:WHR_base, age_change:SBP_base, WHR_change, SBP_change)
     #Thus to obtain the likelihood of the full model compared to the model without the specific term,
     #the respective Bayes Factors have to be inverted. This in done in evaluate_power.R
-    tmp_bf <- generalTestBF(formula = as.formula(paste0(dv, "~ age_base + age_change +
-                                                               SBP_base + age_change:SBP_base + SBP_change  + WHR_base + WHR_base:age_change + WHR_change +
-                                                               sex + icv + id")), 
+    M1_bf <- generalTestBF(formula = as.formula(paste0(dv, "~ age_base + age_change +
+                                                                 SBP_base + age_change:SBP_base + SBP_change +
+                                                                 WHR_base + WHR_base:age_change + WHR_change +
+                                                                 sex + icv + id")), 
                             data=data, whichRandom = "id",  whichModels="top", multicore = T,
-                            neverExclude = c("age_base", "^age_change$", "^SBP_base$", "^WHR_base$", "sex", "icv", "id")
+                            neverExclude = c("age_base", "^age_change$", "^SBP_base$", 
+                                             "^WHR_base$", "sex", "icv", "id")
+    )
+    
+    tmp_bf <- generalTestBF(formula = as.formula(paste0(dv, "~ age_base + age_change +  age_change:sex +
+                                                                SBP_base + age_change:SBP_base + SBP_change +
+                                                                WHR_base + age_change:WHR_base + 
+                                                                sex:WHR_base + 
+                                                                age_change:WHR_base:sex + 
+                                                                WHR_change + id")), 
+                            data=data, whichRandom = "id",  whichModels="top", multicore = T,
+                            neverExclude = c("age_base", "^age_change$", "^SBP_base$", "SBP_change", "WHR_change", "icv", "id")
     )
     bf_extracted=extractBF(tmp_bf,logbf = F)
     
     #calculate the full model for deriving siding factors
     tmp_bf_chains <- generalTestBF(formula = as.formula(paste0(dv, "~ age_base + age_change +
                                                                SBP_base + age_change:SBP_base + SBP_change  + WHR_base + WHR_base:age_change + WHR_change +
-                                                               sex + icv + id")), 
+                                                               sex + icv + id")),
                             data=data, whichRandom = "id",  multicore = T,
                             neverExclude = c("age_base", "^age_change$", "^SBP_base$", "^WHR_base$", "sex", "icv", "id")
     )
@@ -55,7 +69,7 @@ run_LME<- function(dv, data, model, n_it){
     siding_factor <- append(siding_factor, mean(chains[,"age_change.&.SBP_base"]>0))
     siding_factor <- append(siding_factor, mean(chains[,"WHR_change"]>0))
     siding_factor <- append(siding_factor, mean(chains[,"SBP_change"]>0))
-      
+
     #We expect a positive effect of interaction of baseline SBP and WHR with age change
     #and of change in SBP/WHR
     #Because the Bayes factor from WhichModels="top"
