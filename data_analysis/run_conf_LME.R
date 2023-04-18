@@ -40,37 +40,48 @@ run_conf_LME<- function(imp, model,n_it=10){
       for (i in c(1:imp$m)){
         #extract imputed datasets to run functions on individual datasets
         
+        #generalTestBF drops factors one by one and returns BF of the reduced model compared to full model
+        #(Order of dropped coefficients: age_change:WHR_base, age_change:DBP_base, WHR_change, DBP_change)
+        #Thus to obtain the likelihood of the full model compared to the model without the specific term,
+        #the respective Bayes Factors have to be inverted. 
         tmp_bf <- generalTestBF(formula = as.formula("asinh_wml ~ age_base + age_change +
                                                                  DBP_base + age_change:DBP_base + DBP_change +
                                                                  WHR_base + WHR_base:age_change + WHR_change +
                                                                  sex + BPmed + TIV + subj"), 
-                                        data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj", 
-                                        multicore = T, whichModels="top",
-                                        neverExclude = c("age_base", "age_change^", "^DBP_base$", 
-                                                         "^WHR_base$", "sex", "BPmed", "TIV", "subj")
+                                data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj", 
+                                multicore = T, whichModels="top",
+                                neverExclude = c("age_base", "age_change$", "^DBP_base$", 
+                                                 "^WHR_base$", "sex", "BPmed", "TIV", "subj")
         )
-        #model 15 is full model; 
-        #model 7: age_change:WHR_base dropped
-        #model 11: age_change:DBP_base dropped, 
-        #model 14: DBP change dropped
-        #model 13: WHR change dropped
+        bf_extracted=extractBF(tmp_bf,logbf = F)
+        bf_extracted$pred=rownames(bf_extracted)
         
-        bf_etmp=extractBF(tmp_bf,logbf = F)
-        bf_extracted=data.frame(pred=c("age_change:WHR_base", "age_change:DBP_base",
-                                       "WHR_change", "DBP_change"), imp_n=rep(i,4))
-        bf_extracted[,"bf"] <- c(bf_etmp[15,1] / bf_etmp[7,1], bf_etmp[15,1] / bf_etmp[11,1],
-                                 bf_etmp[15,1] / bf_etmp[13,1],bf_etmp[15,1] / bf_etmp[14,1])
+        #calculate only the full model for deriving siding factors
+        tmp_bf_chains <- generalTestBF(formula = as.formula("asinh_wml ~ age_base + age_change +
+                                                                 DBP_base + age_change:DBP_base + DBP_change +
+                                                                 WHR_base + WHR_base:age_change + WHR_change +
+                                                                 sex + BPmed + TIV + subj"),
+                                       data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj",  multicore = T,
+                                       neverExclude = c("age_base", "age_change", "DBP_base", "DBP_change",
+                                                        "WHR_base", "WHR_change", "sex", "BPmed", "TIV", "subj")
+        )
         
-        chains <- posterior(tmp_bf, 15, iterations = n_it, columnFilter="^subj$")
+        siding_factor=vector()
+        chains <- posterior(tmp_bf_chains,  iterations = n_it, columnFilter="^subj$")
+        bf_extracted[1,"siding"]=mean(chains[,"age_change.&.WHR_base"]>0)
+        bf_extracted[2,"siding"]=mean(chains[,"age_change.&.DBP_base"]>0)
+        bf_extracted[3,"siding"]=mean(chains[,"WHR_change"]>0)
+        bf_extracted[4,"siding"]=mean(chains[,"DBP_change"]>0)
+        
         #We expect a positive effect of interaction of baseline DBP and WHR with age change
-        #and of change in DBP/WHR
-        bf_extracted[,"bf_sf"] <- c(mean(chains[,"age_change.&.WHR_base"]>0), mean(chains[,"age_change.&.DBP_base"]>0),
-                                 mean(chains[,"WHR_change"]>0),mean(chains[,"DBP_change"]>0))
-
-        bf_extracted[, "one_sided_bf"] <- bf_extracted[, "bf"] * bf_extracted[, "bf_sf"]/0.5        
+        #and of change in DBP/WHR on WML volume change
+        #Because the Bayes factor from WhichModels="top"
+        #is inverted (i.e. quantifies evidence for reduced model compared to full model),
+        #we have to invert it back and multiply by the siding factor to quantifying evidence
+        #for the alternative hypotheses/full model
+        bf_extracted[, "one_sided_bf"] <- (1/bf_extracted[, "bf"]) * bf_extracted[, "siding"]/0.5
         
         
-      
         if (i==1){
           bfall=bf_extracted}
         else{
@@ -81,7 +92,7 @@ run_conf_LME<- function(imp, model,n_it=10){
         bf_df=as.data.frame(bfall)
         bf_res <- bf_df %>% 
           group_by(pred) %>% 
-          summarise(mean_one_sided_bf = mean(one_sided_bf), sd_bf=sd(one_sided_bf),mean_bf=mean(bf))
+          summarise(mean_one_sided_bf = mean(one_sided_bf), sd_osbf=sd(one_sided_bf),mean_bf=mean(bf))
         }
     
     if (model == "M2_exfunct"){
@@ -90,7 +101,7 @@ run_conf_LME<- function(imp, model,n_it=10){
                                                               asinh_wml_base + asinh_wml_change +
                                                               sex + education + cesd + TIV + subj"), 
                                       data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj",  
-                                      multicore = T,
+                                      multicore = T, whichModels = "top",
                                       neverExclude = c("age_base", "^age_change$",
                                                        "sex", "education", "cesd", 
                                                        "TIV", "subj")
@@ -105,7 +116,7 @@ run_conf_LME<- function(imp, model,n_it=10){
       bf_extracted=data.frame(pred=c("asinh_wml_change", "asinh_wml_base"), imp_n=rep(i,2))
       bf_extracted[,"bf"] <- c(bf_etmp[3,1] / bf_etmp[1,1], bf_etmp[3,1] / bf_etmp[2,1])
       
-      chains <- posterior(tmp_bf, 3, iterations = n_it, columnFilter="^id$")#The third model is the full model with all 10 terms.
+      chains <- posterior(tmp_bf, 3, iterations = n_it, columnFilter="^subj$")#The third model is the full model with all 10 terms.
       
       # take one-sided nature of the alternative hypothesis into account 
       # adjust the BF in favour of the alternative by p(effect size>0)/0.5 by sampling from the posterior
@@ -126,7 +137,7 @@ run_conf_LME<- function(imp, model,n_it=10){
       bf_df=as.data.frame(bfall)
       bf_res <- bf_df %>% 
         group_by(pred) %>% 
-        summarise(mean_one_sided_bf = mean(one_sided_bf), sd_bf=sd(one_sided_bf),mean_bf=mean(bf))
+        summarise(mean_one_sided_bf = mean(one_sided_bf), sd_osbf=sd(one_sided_bf),mean_bf=mean(bf))
       }
     
     if(model == "M3_globalcog"){
@@ -172,7 +183,7 @@ run_conf_LME<- function(imp, model,n_it=10){
         bf_df=as.data.frame(bfall)
         bf_res <- bf_df %>% 
           group_by(pred) %>% 
-          summarise(mean_one_sided_bf = mean(one_sided_bf), sd_bf=sd(one_sided_bf),mean_bf=mean(bf))
+          summarise(mean_one_sided_bf = mean(one_sided_bf), sd_osbf=sd(one_sided_bf),mean_bf=mean(bf))
         }
     
     return(list(est, bf_res))

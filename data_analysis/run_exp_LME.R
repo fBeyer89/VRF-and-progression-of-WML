@@ -84,7 +84,7 @@ run_exp_LME<- function(imp, model, n_it){
       bf_extracted=data.frame(pred=c("age_change:sex"), imp_n=rep(i,1))
       bf_extracted[,"bf"] <- c(bf_etmp[full,1] / bf_etmp[red,1])
       
-      chains <- posterior(tmp_bf, full, iterations = n_it, columnFilter="^id$")
+      chains <- posterior(tmp_bf, full, iterations = n_it, columnFilter="^subj$")
       #We expect a negative effect of interaction of sex (females coded as 0) and age change
       bf_extracted[,"bf_sf"] <- c(mean(chains[,"sex.&.age_change"]<0))
       
@@ -100,7 +100,7 @@ run_exp_LME<- function(imp, model, n_it){
     bf_df=as.data.frame(bf)
     bf_res <- bf_df %>% 
       group_by(pred) %>% 
-      mutate(mean_one_sided_bf = mean(one_sided_bf), sd_bf=sd(one_sided_bf))%>%
+      mutate(mean_one_sided_bf = mean(one_sided_bf), sd_osbf=sd(one_sided_bf))%>%
       mutate(mean_bf = mean(bf), sd_bf=sd(bf))
   }
   if (model == "E2b_DBP"){
@@ -114,8 +114,8 @@ run_exp_LME<- function(imp, model, n_it){
                                                                 WHR_base + WHR_base:age_change + WHR_change +
                                                                 sex + BPmed + TIV + subj"), 
                               data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj", 
-                              multicore = T,
-                              neverExclude = c("age_base", "^age_change$", "^DBP_base$", 
+                              multicore = T, whichModels = "top",
+                              neverExclude = c("age_base", "^age_change$", "DBP_base", 
                                                "^WHR_base$","WHR_change", "DBP_change", "BPmed", "TIV", "subj") 
       )
       
