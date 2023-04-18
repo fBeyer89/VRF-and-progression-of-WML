@@ -39,8 +39,8 @@ imp_l <- mice::complete(imp, "long", include = TRUE)
 imp.itt <- mice::as.mids(imp_l)
 
 #Test the models for main hypothesis H1 & E1a - E1c
-source("run_LME_realdata.R")
-res=run_conf_LME(imp.itt, "M1_VRF",100)
+source("run_conf_LME.R")
+res=run_conf_LME(imp.itt, "M1_VRF",n_it=10)
 
 res2=run_conf_LME(imp.itt, "M2_exfunct",100)
 

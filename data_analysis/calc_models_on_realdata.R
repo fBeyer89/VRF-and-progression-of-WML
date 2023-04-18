@@ -18,14 +18,36 @@ source('test_LME_assumptions.R')
 ####################################################
 # Run confirmatory models
 ####################################################
-#M1: effect of baseline DBP on WML change (also calculated E1a - E1c: effects of baseline WHR, change DBP and change WHR)
-res_VRF= run_conf_LME(imp, "M1_VRF")
+#M1: effect of baseline DBP:age_change on WML change (also calculated E1a - E1c: effects of baseline WHR:age change, change DBP and change WHR)
+res_VRF= run_conf_LME(imp, "M1_VRF",n_it=10)
 
 #M2: effect of WML change on executive function
-res_exec= run_conf_LME(imp, "M2_exfunct")
+res_exec= run_conf_LME(imp, "M2_exfunct",n_it=10)
 
 #M3: effect of WML change on global cognition
-res_globalcog= run_conf_LME(imp, "M3_globalcog")
+res_globalcog= run_conf_LME(imp, "M3_globalcog",n_it=10)
+
+####################################################
+# Run exploratory analyses
+####################################################
+#M1E2a: modifying effect of gender on age-related WML increase
+res_VRF= run_exp_LME(imp, "E2a_age", n_it=10)
+
+#M1E2b: modifying effect of gender on DBP-related WML increase
+res_VRF= run_exp_LME(imp, "E2b_DBP", n_it=10)
+
+#M1E2c: modifying effect of gender on WHR-related WML increase
+res_VRF= run_exp_LME(imp, "E2c_DBP", n_it=10)
+
+#M2E3a: modifying effect of gender on WML increase on executive function
+res_exec= run_exp_LME(imp, "E3a_exfunct", n_it=10)
+
+#M3E3b: modifying effect of gender on WML increase on global cognition
+res_globalcog= run_exp_LME(imp, "E3b_globalcog", n_it=10)
+
+####################################################
+# Run sex-stratified analyses (if interaction not significant)
+####################################################
 
 ####################################################
 # Test assumptions
@@ -44,7 +66,7 @@ res_globalcog= test_LME_assumptions(imp, "globalcog")
 # (only for one imputation)
 ####################################################
 comp_imp=mice::complete(imp, "long")
-imp_data=comp_imp[comp_imp$.imp==i,]
+imp_data=comp_imp[comp_imp$.imp==1,]
 
 test_vif=lm(asinh_wml ~ age_base + age_change + 
               SBP_base + SBP_change + 
@@ -59,24 +81,3 @@ test_vif_cog=lm(exfunct ~ age_base + age_change +
 test_vif_cog <- as.data.frame(vif(test_vif_cog))
 write.csv(test_vif_cog, '/data/pt_life_whm/Results/VRF_cSVD/LME/assumptions/vif/Cog_model.csv')
 
-####################################################
-# Run exploratory analyses
-####################################################
-#M1E2a: modifying effect of gender on age-related WML increase
-res_VRF= run_exp_LME(imp, "E2a_age")
-
-#M1E2b: modifying effect of gender on DBP-related WML increase
-res_VRF= run_exp_LME(imp, "E2b_DBP")
-
-#M1E2c: modifying effect of gender on WHR-related WML increase
-res_VRF= run_exp_LME(imp, "E2c_DBP")
-
-#M2E3a: modifying effect of gender on WML increase on executive function
-res_exec= run_exp_LME(imp, "E3a_exfunct")
-
-#M3E3b: modifying effect of gender on WML increase on global cognition
-res_globalcog= run_exp_LME(imp, "E3b_globalcog")
-
-####################################################
-# Run sex-stratified analyses (if interaction not significant)
-####################################################

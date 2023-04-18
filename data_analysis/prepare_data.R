@@ -16,6 +16,8 @@ library(naniar) # helps to deal with NA
 ############################################################################
 wml=read.csv("/data/pt_life_whm/Results/Tables/longvols_w_pseudonym_qa.csv")
 colnames(wml)[1]="mrt_pseudonym"
+
+wml0=read.csv("/data/pt_life_whm/Results/Tables/longvols_w_pseudonym_qa.csv")
 ############################################################################
 #  Add PV-specific pseudonyms to the MRI pseudonyms
 ############################################################################
@@ -61,37 +63,37 @@ wml=merge(wml, demo[,c("pv_pseudonym", "education")], by = "pv_pseudonym", all.x
 ##########################################################################
 # Load MRI dates (for LST, the earlier scan ("bl") was always selected)
 MRI_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00197_NODUP.xlsx")
-MRI_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1//PV0609_T01158_NODUP.xlsx")
 MRI_bl$MRT_DATUM_bl <- as.Date(MRI_bl$MRT_DATUM)
+
+MRI_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1//PV0609_T01158_NODUP_withMissingScans.xlsx")
 
 # For controlling that earlier time point was selected.
 MRI_bl_duplicates <-
   MRI_bl  %>% 
   arrange(MRT_DATUM_bl) %>%
-  filter(duplicated(.[["MRT_SIC"]]))
+  filter(duplicated(.[["SIC"]]))
 
 MRI_bl_wo_duplicates <-
   MRI_bl  %>% 
   arrange(MRT_DATUM_bl) %>%
-  filter(!duplicated(.[["MRT_SIC"]]))
+  filter(!duplicated(.[["SIC"]]))
 
 MRI_fu$MRT_DATUM_fu <- as.Date(MRI_fu$MRT_ZW_U_DATUM)
 
-wml=merge(wml, MRI_bl_wo_duplicates[,c("MRT_SIC","MRT_DATUM_bl")], by.x="pv_pseudonym", by.y="MRT_SIC", all.x=T)
-wml=merge(wml, MRI_fu[,c("MRT_ZW_U_SIC","MRT_DATUM_fu")], by.x="pv_pseudonym", by.y="MRT_ZW_U_SIC", all.x=T, by="pseudonym")
+wml=merge(wml, MRI_bl_wo_duplicates[,c("SIC","MRT_DATUM_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
+wml=merge(wml, MRI_fu[,c("SIC","MRT_DATUM_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T, by="pseudonym")
 
 ############################################################################
 #  Load medication, medical anamnese and radiological assessment data
 #  for Exclusion
 ############################################################################
 medanam_bl=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00173_NODUP.xlsx")
-medanam_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00173_NODUP.xlsx")
-#("T01228.xlsx")
-kardanam_fu <- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_kardanam_20210511.xlsx")
+medanam_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T01228_NODUP.xlsx")
+kardanam_fu <- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T01226_NODUP.xlsx")
 
 # rename medical anamnesis labels to make them understandable
 medanam_bl <- medanam_bl %>%
-    rename(
+  rename(
     epilepsy_bl = MEDANAM_F0167, 
     parkinson_bl = MEDANAM_F0171,
     MS_bl = MEDANAM_F0179,
@@ -109,11 +111,11 @@ medanam_bl_wo_duplicates <-
 
 medanam_fu <- medanam_fu %>%
   rename(
-    other_diseases = mediz_an.f31a, 
-    parkinson_fu = mediz_an.f27,
-    MS_fu = mediz_an.f26,
-    dementia_fu = mediz_an.f30,
-    dat_medanam_fu = edat)
+    other_diseases = MEDIZ_AN_F31, 
+    parkinson_fu = MEDIZ_AN_F27,
+    MS_fu = MEDIZ_AN_F26,
+    dementia_fu = MEDIZ_AN_F30,
+    dat_medanam_fu = MEDIZ_AN_EDAT)
 medanam_fu <- medanam_fu %>%
   mutate(epilepsy_fu = case_when(
     other_diseases == "EPILEPSIE" ~ 1,
@@ -121,26 +123,28 @@ medanam_fu <- medanam_fu %>%
   ))
 
 #Duplicates in medanam_fu (use only those from FU_A1, not A1_FU1_ANSCH which has
-#been usually performed before the 2nd
-#MRI, maybe this refers to postal questionnaires)
+#been usually performed before the 2nd #MRI, maybe this refers to postal questionnaires)
+#medanam_fu_duplicates <-
+#  medanam_fu  %>% 
+#  arrange(dat_medanam_fu) %>%
+#  filter(duplicated(.[["SIC"]]))
+
 medanam_fu_wo_duplicates <-
   medanam_fu  %>% 
-  filter(sgroup!="A1_FU1_ANSCH") %>% 
-  filter(sgroup!="A1_F1_MRT_VERGLEICH1")
+  filter(GRUPPE=="A1_FU1") 
 
 kardanam_fu <- kardanam_fu%>%
-  rename(stroke_fu = kard_an.f7,
-         hyp_treat_fu = kard_an.f10,
-         dat_kardanam_fu = edat)
+  rename(stroke_fu = KARD_AN_F7,
+         hyp_treat_fu = KARD_AN_F10,
+         dat_kardanam_fu = KARD_AN_EDAT)
 
 kardanam_fu_wo_duplicates <-
   kardanam_fu  %>% 
-  filter(sgroup!="A1_FU1_ANSCH") %>% 
-  filter(sgroup!="A1_F1_MRT_VERGLEICH1")
+  filter(GRUPPE=="A1_FU1") 
 
 wml=merge(wml, medanam_bl_wo_duplicates[,c("SIC", "epilepsy_bl", "stroke_bl", "MS_bl", "parkinson_bl", "hyp_treat_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
-wml=merge(wml, medanam_fu_wo_duplicates[,c("pseudonym","dat_medanam_fu", "epilepsy_fu", "MS_fu", "parkinson_fu", "dementia_fu")], by.x="pv_pseudonym", by.y="pseudonym",all.x=T)
-wml=merge(wml, kardanam_fu_wo_duplicates[,c("pseudonym", "dat_kardanam_fu", "stroke_fu", "hyp_treat_fu")], by.x="pv_pseudonym", by.y="pseudonym",all.x=T)
+wml=merge(wml, medanam_fu_wo_duplicates[,c("SIC","dat_medanam_fu", "epilepsy_fu", "MS_fu", "parkinson_fu", "dementia_fu")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
+wml=merge(wml, kardanam_fu_wo_duplicates[,c("SIC", "dat_kardanam_fu", "stroke_fu", "hyp_treat_fu")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
 
 ## MMSE score
 sidam_bl=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_T00043_NODUP.xlsx")
@@ -202,10 +206,10 @@ sidam_fu = sidam_fu %>%
 sidam_fu_wo_duplicates <-
   sidam_fu  %>% 
   arrange(SIDAM1_STARTZEIT) %>%
-  filter(!duplicated(.[["SIDAM1_SIC"]]))
+  filter(!duplicated(.[["SIC"]]))
 
-wml=merge(wml, sidam_bl_wo_duplicates[,c("SIC", "MMSE_exclude_bl")], by.x="sic", by.y="SIC", all.x=T)
-wml=merge(wml, sidam_fu_wo_duplicates[,c("SIDAM1_SIC", "MMSE_exclude_fu")], by.x="sic", by.y="SIDAM1_SIC", all.x=T)
+wml=merge(wml, sidam_bl_wo_duplicates[,c("SIC", "MMSE_exclude_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
+wml=merge(wml, sidam_fu_wo_duplicates[,c("SIC", "MMSE_exclude_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
 
 ############################################################################
 # load data from radiological assessments (is already in long format, merge later)
@@ -317,10 +321,11 @@ medianam_bl_wo_duplicates <-
   arrange(ADULT_MEDA_H_DATUM) %>%
   filter(!duplicated(.[["SIC"]]))
 
-# Identify cases to exclude at followup 
-medianam_fu <- read_excel("/data/pt_life/ResearchProjects/LLammer/Data/data/Followup_update/PV0573_IDOM_Medikamente_horizontal.xlsx")
+# Identify cases to exclude at followup (using Laurenz table as LIFE did not yet provide followup medication for me)
+medianam_fu <- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/fromLaurenz/PV0573_T01499_NODUP(2).xlsx")
+ids_ll <-read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/fromLaurenz/PV573_PV-MRT-Pseudonymliste.xlsx")
 
-medianam_fu$ADULT_MEDA_H_ATC <- str_replace_all(medianam_fu$ATC, ",", ", ")
+medianam_fu$ADULT_MEDA_H_ATC <- str_replace_all(medianam_fu$IDOM_UNT_ATC, ",", ", ")
 medianam_fu$ADULT_MEDA_H_ATC <- str_replace_all(medianam_fu$ADULT_MEDA_H_ATC, "#", "") 
 to_match <- c("^M03B", "M03B", 
               "^N02A", "N02A", "^N03", "N03", "^N07A", "N07A", "^N07CA", 
@@ -357,11 +362,13 @@ medianam_fu <- medianam_fu %>%
 #Remove duplicates (which are truely duplicates, not repeated measures)
 medianam_fu_wo_duplicates <-
   medianam_fu %>%
-  arrange(DATUM) %>%
-  filter(!duplicated(.[["PSEUDONYM"]]))
+  arrange(IDOM_UNT_EDAT) %>%
+  filter(!duplicated(.[["IDOM_UNT_SIC"]]))
+
+medianam_fu_wo_duplicates=merge(medianam_fu_wo_duplicates, ids_ll, all.x=T, by.x="IDOM_UNT_SIC", by.y="pv_pseudonym")
 
 wml=merge(wml, medianam_bl_wo_duplicates[,c("SIC", "centr_act_med_bl", "BPmed_bl")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
-wml=merge(wml, medianam_fu_wo_duplicates[,c("PSEUDONYM", "centr_act_med_fu", "BPmed_fu")], by.x="pv_pseudonym",by.y="PSEUDONYM", all.x=T)
+wml=merge(wml, medianam_fu_wo_duplicates[,c("mrt_pseudonym", "centr_act_med_fu", "BPmed_fu")], by.x="mrt_pseudonym",by.y="mrt_pseudonym", all.x=T)
 
 
 ############################################################################
@@ -390,15 +397,15 @@ bp_bl_wo_duplicates <-
   arrange(ADULT_BP_S010063_DATUM) %>%
   filter(!duplicated(.[["SIC"]]))
 
-# SBP followup
+# DBP followup
 bp_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T01170_NODUP.xlsx")
 
 # Replace all missing or wrong values with NA
-bp_fu<- replace_with_na_at(bp_fu, c("BP_F0024", "BP_F0019", "BP_F0014",
-                                    "BP_F0015", "BP_F0020", "BP_F0025"), ~.x %in% c(998, 996))
+bp_fu<- replace_with_na_at(bp_fu, c("BP_F0019", "BP_F0020", "BP_F0024",
+                                    "BP_F0025", "BP_F0029", "BP_F0030"), ~.x %in% c(998, 996))
 
-bp_fu$SBP_fu <- (bp_fu$BP_F0024 + bp_fu$BP_F0019 + bp_fu$BP_F0014)/3
-bp_fu$DBP_fu <- (bp_fu$BP_F0025 + bp_fu$BP_F0020 + bp_fu$BP_F0015)/3 #VERIFY
+bp_fu$SBP_fu <- (bp_fu$BP_F0019 + bp_fu$BP_F0024 + bp_fu$BP_F0029)/3
+bp_fu$DBP_fu <- (bp_fu$BP_F0020 + bp_fu$BP_F0025 + bp_fu$BP_F0030)/3 #VERIFied!
 
 bp_fu= bp_fu %>%
   mutate(DBP_fu = case_when(
@@ -406,7 +413,7 @@ bp_fu= bp_fu %>%
     SBP_fu < DBP_fu ~ NA_real_,
     TRUE ~ DBP_fu))
 
-#Remove duplicates ##NEEDS TO BE CHECKED FOR 2nd BP measurement
+#Remove duplicates 
 bp_fu_wo_duplicates <-
   bp_fu %>%
   arrange(BP_DATUM) %>%
@@ -453,9 +460,9 @@ whr_fu= whr_fu %>%
     WHR_fu > 1.5 ~ NA_real_,
     TRUE ~ WHR_fu))
 
-wml=merge(wml, bp_bl_wo_duplicates[,c("SIC", "SBP_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
-wml=merge(wml, bp_fu_wo_duplicates[,c("SIC", "SBP_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
-wml=merge(wml, whr_bl_wo_duplicates[,c("SIC", "WHR_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
+wml=merge(wml, bp_bl_wo_duplicates[,c("SIC", "ADULT_BP_DBP")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
+wml=merge(wml, bp_fu_wo_duplicates[,c("SIC", "DBP_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
+wml=merge(wml, whr_bl_wo_duplicates[,c("SIC", "whr_bl")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
 wml=merge(wml, whr_fu[,c("SIC", "WHR_fu")], by.x="pv_pseudonym", by.y="SIC", all.x=T)
 
 #Cognitive Scores
@@ -600,7 +607,7 @@ cog_complete=merge(cog_complete,tmt[,c('SIC', 'TMT', 'proc')], all=T )
 return(cog_complete)
 }
 
-cog_bl=calc_cog_outcomes(cerad_bl_wo_duplicates, cerad_bl_young_wo_duplicates, 
+cog_bl=calc_cog_outcomes(cerad_bl_wo_duplicates, cerad_young=data.frame(), 
                          cerad_bl_anim_wo_duplicates, cerad_bl_tmt_wo_duplicates)
 colnames(cog_bl)[2:length(colnames(cog_bl))]=paste0(colnames(cog_bl)[2:length(colnames(cog_bl))],"_bl")
 
@@ -612,6 +619,11 @@ colnames(cog_fu)[2:length(colnames(cog_fu))]=paste0(colnames(cog_fu)[2:length(co
 
 wml=merge(wml, cog_bl, by.x="pv_pseudonym", by.y="SIC", all.x=T)
 wml=merge(wml, cog_fu, by.x="pv_pseudonym", by.y="SIC", all.x=T)
+
+#REPLACE MRI_fu date with CERAD date for three cases to calculate age anyhow
+wml[is.na(wml$MRT_DATUM_fu),"MRT_DATUM_fu"] = wml[is.na(wml$MRT_DATUM_fu), "CERAD_DATUM_fu"]
+
+
 ############################################################################
 # Control variables
 ############################################################################
@@ -657,9 +669,6 @@ cesd_fu_wo_duplicates <-
 wml=merge(wml, cesd_bl_wo_duplicates[,c("SIC", "CESD_sum_bl")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
 wml=merge(wml, cesd_fu_wo_duplicates[,c("SIC", "CESD_sum_fu")], by.x="pv_pseudonym", by.y="SIC",all.x=T)
 
-#temporary fix
-wml$CESD_sum_fu=wml$CESD_sum_bl
-
 
 ############################################################################
 #TIV
@@ -674,42 +683,42 @@ aseg_wo_duplicates <-
   aseg %>%
   filter(!duplicated(.[["mrt_pseudonym"]]))
 
-wml=merge(wml, aseg_wo_duplicates[,c("mrt_pseudonym", "TIV")], all.x=T)
+wml=merge(wml, aseg_wo_duplicates[,c("mrt_pseudonym", "TIV")], all.x=T, by.x="sic", by.y="mrt_pseudonym")
 
 
 ############################################################################
 # Reshaping the data into long format.
 ############################################################################
-varying=list(c(6,7), #wml
-             c(11, 12), #mrt datum
-             c(13,19), #epilepsy
-             c(14, 24), #stroke
-             c(15, 20), #MS
-             c(16, 21), #parkinson
-             c(26,27), #MMSE
-             c(28, 31), #radio assessment usable
-             c(29,32), #exclude tumour
-             c(30, 33), #exclude lesion
-             c(34, 36), #central medication
-             c(38, 39), #SBP
-             c(40, 41), # WHR
-             c(43, 53), #learning
-             c(44, 54), #learning_na
-             c(45, 55), #recall
-             c(46, 56), #recall_na
-             c(47, 57), #recognition
-             c(48, 58), #phonemic fluency
-             c(49, 59), #semantic fluency
-             c(50, 60), #TMT
-             c(51, 61), #processing
-             c(62,63), #BPmed
-             c(64, 65) #CESD
+varying=list(c("wml_vol_bl","wml_vol_fu"), #wml
+             c("MRT_DATUM_bl", "MRT_DATUM_fu"), #mrt datum
+             c("epilepsy_bl","epilepsy_fu"), #epilepsy
+             c("stroke_bl", "stroke_fu"), #stroke
+             c("MS_bl", "MS_fu"), #MS
+             c("parkinson_bl", "parkinson_fu"), #parkinson
+             c("MMSE_exclude_bl","MMSE_exclude_fu"), #MMSE
+             c("exclude_usable_bl", "exclude_usable_fu"), #radio assessment usable
+             c("excludetumor_bl","excludetumor_fu"), #exclude tumour
+             c("excludelesion_bl", "excludelesion_fu"), #exclude lesion
+             c("centr_act_med_bl", "centr_act_med_fu"), #central medication
+             c("ADULT_BP_DBP", "DBP_fu"), #SBP
+             c("whr_bl", "WHR_fu"), # WHR
+             c("learning_bl", "learning_fu"), #learning
+             c("learning_na_bl", "learning_na_fu"), #learning_na
+             c("recall_bl", "recall_fu"), #recall
+             c("recall_na_bl", "recall_na_fu"), #recall_na
+             c("recognition_bl", "recognition_fu"), #recognition
+             c("phon_flu_bl", "phon_flu_fu"), #phonemic fluency
+             c("sem_flu_bl", "sem_flu_fu"), #semantic fluency
+             c("TMT_bl", "TMT_fu"), #TMT
+             c("proc_bl", "proc_fu"), #processing
+             c("BPmed_bl_n", "BPmed_fu_n"), #BPmed
+             c("CESD_sum_bl", "CESD_sum_fu") #CESD
                          )
 varying_names=c("wml", "mrt_datum",
                 "epilepsy", "stroke", "MS", "parkison",
                 "MMSE", "radio_usable",
-                "radio_lesion", "radio_tumour","med_central",
-                "SBP", "WHR", 
+                "radio_tumour","radio_lesion", "med_central",
+                "DBP", "WHR", 
                 "learning", "learning_na", "recall", "recall_na",
                 "recognition", "phon_f", "sem_f", "TMT", "proc",
                 "BPmed", "cesd")
@@ -720,6 +729,7 @@ wml_long=reshape(wml, varying=varying,
 # Calculate age in years
 wml_long = wml_long %>% 
   mutate(age = as.integer(mrt_datum - birth)/365)
+
 
 ############################################################################
 # Apply exclusion criteria
@@ -738,69 +748,79 @@ wml_long = wml_long %>%
 exclude_ids = wml_long %>%
   group_by(mrt_pseudonym) %>%
   filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 |
-           radio_usable == 1 | radio_lesion == 1 | radio_tumour == 1 |
-           med_central == 1 | MMSE == 1 | qa_check ==1 | qa_check == 3)
-wml_long <- filter(wml_long, !(mrt_pseudonym %in% exclude_ids$mrt_pseudonym))
+           MMSE == 1 | dementia_fu == 1 |
+           radio_usable == 1 | radio_lesion == 1 | radio_tumour == 1 |qa_check ==1 | qa_check == 3|
+           med_central == 1 )
+wml_long_excl <- filter(wml_long, !(mrt_pseudonym %in% exclude_ids$mrt_pseudonym))
 
-# Exclude participants with missing/implausible values of SBP/WHR at baseline AND
-# followup
-#wml_long = wml_long %>% 
-#  group_by(mrt_pseudonym) %>%
-#  mutate(sum_na_SBP = sum(is.na(SBP)),
-#         sum_na_WHR = sum(is.na(WHR))) %>%
-#  filter(sum_na_SBP < 2 & sum_na_WHR < 2)
-
-# Exclude participants without cognitive data (e.g. na values for learning,
-# recall, fluencies and TMT)
-#wml_long = wml_long %>% 
-#  group_by(mrt_pseudonym) %>%
-#  mutate(sum_na_cognition = sum(is.na(learning)+is.na(recall)+is.na(phon_f)+is.na(sem_f)+is.na(TMT)+is.na(proc))) %>%
-#  filter(sum_na_cognition < 12)
+## To identify exclusion reasons
+exclude_ids = wml_long %>%
+  group_by(mrt_pseudonym) %>%
+  filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1)
+excl_path=length(unique(exclude_ids$mrt_pseudonym))
+exclude_ids = wml_long %>%
+  group_by(mrt_pseudonym) %>%
+  filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 | MMSE == 1 | dementia_fu == 1 )
+excl_dement=length(unique(exclude_ids$mrt_pseudonym))
+exclude_ids = wml_long %>%
+  group_by(mrt_pseudonym) %>%
+  filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 | MMSE == 1 | dementia_fu == 1 |
+           radio_usable == 1 | radio_lesion == 1 | radio_tumour == 1 | qa_check ==1 | qa_check == 3)
+excl_radio=length(unique(exclude_ids$mrt_pseudonym))
+exclude_ids = wml_long %>%
+  group_by(mrt_pseudonym) %>%
+  filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 | MMSE == 1 | dementia_fu == 1 |
+           radio_usable == 1 | radio_lesion == 1 | radio_tumour == 1 | qa_check ==1 | qa_check == 3|
+           med_central == 1 )
+excl_medcentral=length(unique(exclude_ids$mrt_pseudonym))         
 
 # Exclude participants out of the specified age range (45 -85y at baseline)
-ids = wml_long %>% 
+ids = wml_long_excl %>% 
   filter(time == "bl" & !is.na(age) & age>45 & age < 85)
 
-wml_long <- filter(wml_long, (mrt_pseudonym %in% ids$mrt_pseudonym))
+wml_long_excl_a <- filter(wml_long_excl, (mrt_pseudonym %in% ids$mrt_pseudonym))
 
 
 ############################################################################
 # Standardize variables
 ############################################################################
-wml_long <- wml_long %>%
+wml_long_excl_a <- wml_long_excl_a %>%
   mutate_at(.vars = c("learning", "recall", "recognition", "sem_f", "phon_f", "TMT", 
                       "proc"), ~(scale(.) %>% as.vector)) 
 
 # calculate composite scores for cognitive functions depending on number of available tests
-wml_long$exfunct <- apply(wml_long[, c("phon_f", "sem_f", "TMT")], 1, mean, na.rm=TRUE)
-wml_long$memo <- apply(wml_long[, c("learning", "recognition", "recall")], 1, mean, na.rm=TRUE)
-wml_long$globalcog <- apply(wml_long[, c("exfunct", "memo", "proc")], 1, mean, na.rm=TRUE)
+wml_long_excl_a$exfunct <- apply(wml_long_excl_a[, c("phon_f", "sem_f", "TMT")], 1, mean, na.rm=TRUE)
+wml_long_excl_a$memo <- apply(wml_long_excl_a[, c("learning", "recognition", "recall")], 1, mean, na.rm=TRUE)
+wml_long_excl_a$globalcog <- apply(wml_long_excl_a[, c("exfunct", "memo", "proc")], 1, mean, na.rm=TRUE)
 
 # scale outcome variables to improve interpretability
-wml_long <- wml_long %>%
+wml_long_excl_a <- wml_long_excl_a %>%
   mutate_at(.vars = c("exfunct", "memo", "globalcog"), ~(scale(.) %>% as.vector))
 
 ############################################################################
 # Missing values
 ############################################################################
 #Prepare data frame for imputation
-test = wml_long %>% 
+test = wml_long_excl_a %>% 
            mutate(subj=as.integer(as.factor(mrt_pseudonym)),
-                  time=as.factor(time),
-                  sic=as.factor(sic),
-                  BPmed = as.factor(BPmed),
-                  education=as.factor(education))%>%
-          select(c(1,6,8,18,19,20,21,31,32,33,35,37,38,39,40,41,42,43,44,45,46,47,48))%>%
-          relocate(mrt_pseudonym,wml, mrt_datum,.after = globalcog)%>%
+                 time=as.factor(time),
+                 BPmed = as.factor(BPmed),
+                 education=as.factor(education))%>% 
+          select(c("subj","sex","education","TIV","time","wml","mrt_datum","DBP","WHR",
+                   "learning","recall","recognition","phon_f","sem_f","TMT","proc","BPmed","cesd",
+                   "age","exfunct","memo","globalcog"))%>%
+          relocate(subj,wml, mrt_datum,.after = globalcog)%>%
           relocate(subj, time, age, .before = sex)%>%
-          relocate(SBP, WHR, cesd, BPmed, .after = TIV)
+          relocate(DBP, WHR, cesd, BPmed, .after = TIV)
+          
 
 #inspect pattern of missingness
-mising_pattern=mice::md.pattern(test)
+mising_pattern=mice::md.pattern(test,rotate.names = T)
 
-#right now, there are missing values in Age which need to be removed
-#(missing MRI data)              
-test=test[!is.na(test$age),]
+#missing values in cognition are only for 2C7113BE1D for one timepoint
+wml_long_excl_a[is.na(wml_long_excl_a$exfunct)&
+                  is.na(wml_long_excl_a$memo)&
+                  is.na(wml_long_excl_a$proc),]
 
 #Impute all NAs in this dataframe
 # set default predictor matrix
@@ -814,23 +834,23 @@ ini$loggedEvents #logged events point out issues we know
 
 #Need to add WHR here once it is varying ;)
 
-colnames(test)
+colnames(test)[1:10]
 
 pred <- ini$predictorMatrix
-pred["education",] <- c(-2, 0, 1, 1, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-pred["TIV",] <- c(-2, 0, 1, 1, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0) 
-pred["SBP",] <- c(-2, 1, 1, 1, 1, 0, 0, 0 , 1, 1,0,0,0,0,0,0,0,0,0,0,0,0,0)  
-#pred["WHR",] <- c(-2, 1, 1, 1, 1, 0, 1, 1, 0) 
-pred["cesd",] <- c(-2, 1, 1, 1, 1, 0, 1, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0) 
-pred["BPmed",] <- c(-2, 1, 1, 1, 0, 0, 1, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0)  
+pred["education",] <- c(-2, 0, 1, 1, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0)
+pred["TIV",] <-       c(-2, 0, 1, 1, 0, 0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0) 
+pred["DBP",] <-       c(-2, 1, 1, 1, 1, 0, 0, 1, 1, 1,0,0,0,0,0,0,0,0,0,0,0,0)  
+pred["WHR",] <-       c(-2, 1, 1, 1, 1, 0, 1, 0, 1, 1,0,0,0,0,0,0,0,0,0,0,0,0) 
+pred["cesd",] <-      c(-2, 1, 1, 1, 1, 0, 1, 1, 0, 1,0,0,0,0,0,0,0,0,0,0,0,0) 
+pred["BPmed",] <-     c(-2, 1, 1, 1, 0, 0, 1, 1, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0)  
 
 
 # set imputation method 
 
 impmethod <- c("", "", "", "", 
                "2l.bin", "2lonly.pmm", #second level imputation  of education and TIV only
-               "2l.pan", "", "2l.pan", "2l.bin", # first level imputation of SBP, WHR, cesd, BPmed
-               "", "", "", "", "", "", "", "", "", "", "", "", "")
+               "2l.pan", "2l.pan", "2l.pan", "2l.bin", # first level imputation of DBP, WHR, cesd, BPmed
+               "", "", "", "", "", "", "", "", "", "", "", "")
 names(impmethod) <- colnames(test)
 
 
@@ -859,11 +879,11 @@ imp_l <- imp_l %>%
     subj=as.factor(subj),
     cesd = asinh(cesd),
     age_base = ifelse(time == "bl", age, lag(age)),
-    SBP_base = ifelse(time == "bl", SBP, lag(SBP)),
-    #WHR_base = ifelse(time == "bl", WHR, lag(WHR)),
+    DBP_base = ifelse(time == "bl", DBP, lag(DBP)),
+    WHR_base = ifelse(time == "bl", WHR, lag(WHR)),
     age_change = ifelse(time == "bl", 0, age - age_base),
-    SBP_change = ifelse(time == "bl", 0, SBP - SBP_base),
-    #WHR_change = ifelse(time == "bl", WHR - WHR_base),
+    DBP_change = ifelse(time == "bl", 0, DBP - DBP_base),
+    WHR_change = ifelse(time == "bl", WHR - WHR_base),
     asinh_wml = asinh(wml),
     asinh_wml_base = ifelse(time == "bl", asinh_wml, lag(asinh_wml)),
     asinh_wml_change = ifelse(time == "bl", 0, asinh_wml - asinh_wml_base))

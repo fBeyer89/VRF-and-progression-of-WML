@@ -1,4 +1,4 @@
-run_conf_LME<- function(imp, model,n_it){
+run_conf_LME<- function(imp, model,n_it=10){
     # Calculates model results for a MIDS (Multiply Imputed Data Set) from mice.
     # Model can take values "M1_VRF", "M2_exfunct" and "M3_globalcog".
   
@@ -33,24 +33,20 @@ run_conf_LME<- function(imp, model,n_it){
     #########################
     # Bayesian statistics
     #########################
-    #generalTestBF drops factors one by one and returns BF of the reduced model compared to null model
-    #(Order of dropped coefficients: age_change:WHR_base, age_change:DBP_base, WHR_change, DBP_change)
-    #Thus to obtain the likelihood of the full compared to null model, the respective Bayes Factors have
-    #to be inverted. This is done in when calculating the mean BF.
     
-    #Pool by calculating mean and standard deviation of BFs across 5 imputations
+    #Pool by calculating mean and standard deviation of BFs across all imputed datasets 
     comp_imp=mice::complete(imp, "long")  
     if (model == "M1_VRF"){
       for (i in c(1:imp$m)){
-        
+        #extract imputed datasets to run functions on individual datasets
         
         tmp_bf <- generalTestBF(formula = as.formula("asinh_wml ~ age_base + age_change +
                                                                  DBP_base + age_change:DBP_base + DBP_change +
                                                                  WHR_base + WHR_base:age_change + WHR_change +
                                                                  sex + BPmed + TIV + subj"), 
                                         data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj", 
-                                        multicore = T,
-                                        neverExclude = c("age_base", "^age_change$", "^DBP_base$", 
+                                        multicore = T, whichModels="top",
+                                        neverExclude = c("age_base", "age_change^", "^DBP_base$", 
                                                          "^WHR_base$", "sex", "BPmed", "TIV", "subj")
         )
         #model 15 is full model; 
@@ -65,7 +61,7 @@ run_conf_LME<- function(imp, model,n_it){
         bf_extracted[,"bf"] <- c(bf_etmp[15,1] / bf_etmp[7,1], bf_etmp[15,1] / bf_etmp[11,1],
                                  bf_etmp[15,1] / bf_etmp[13,1],bf_etmp[15,1] / bf_etmp[14,1])
         
-        chains <- posterior(tmp_bf, 15, iterations = n_it, columnFilter="^id$")#The fifteenth model is the full model with all 10 terms.
+        chains <- posterior(tmp_bf, 15, iterations = n_it, columnFilter="^subj$")
         #We expect a positive effect of interaction of baseline DBP and WHR with age change
         #and of change in DBP/WHR
         bf_extracted[,"bf_sf"] <- c(mean(chains[,"age_change.&.WHR_base"]>0), mean(chains[,"age_change.&.DBP_base"]>0),
