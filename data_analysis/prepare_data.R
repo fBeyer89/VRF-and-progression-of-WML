@@ -7,17 +7,17 @@ library(lubridate) #package to work with data and time
 library(naniar) # helps to deal with NA
 #library(lme4)
 #library(stringr)
+library(mice)
 
 #Prepare data for CVR-cSVD RR
 #Collect all variables in wide format and then transform to long
+
 
 ############################################################################
 #  Load WML data (as only participants with both time point WML data will be included)
 ############################################################################
 wml=read.csv("/data/pt_life_whm/Results/Tables/longvols_w_pseudonym_qa.csv")
 colnames(wml)[1]="mrt_pseudonym"
-
-wml0=read.csv("/data/pt_life_whm/Results/Tables/longvols_w_pseudonym_qa.csv")
 ############################################################################
 #  Add PV-specific pseudonyms to the MRI pseudonyms
 ############################################################################
@@ -27,7 +27,7 @@ wml=merge(wml[,c("mrt_pseudonym", "qa_check", "qa_comment", "wml_vol_bl", "wml_v
 ############################################################################
 #  Add SIC pseudonyms to the MRI pseudonyms
 ############################################################################
-sic_pseudo=read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Preprocessed/derivatives/pseudo_mrt_20201214.xlsx")
+sic_pseudo=read.csv("/data/gh_gr_agingandobesity_share/life_shared/Data/Preprocessed/derivatives/pseudo_mrt_20201214.csv")
 wml=merge(wml, sic_pseudo, all.x=T, by.x="mrt_pseudonym", by.y="pseudonym")
 
 ############################################################################
@@ -52,13 +52,16 @@ wml=merge(wml, basic[,c("pv_pseudonym", "sex", "birth")], by="pv_pseudonym", all
 #  Load education (contains duplicates)
 ############################################################################
 demo <- read_excel("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult Basis/PV0609_D00140_NODUP.xlsx")
-#remove duplicates (assuming that education was the same at both timepoints)
-demo = demo[!duplicated(demo$SIC),]
+#remove duplicates (keep earlier timepoint)
+demo_bl_wo_duplicates <-
+  demo  %>% 
+  arrange(SES2_EDAT) %>%
+  filter(!duplicated(.[["SIC"]]))
 # categorise participants with less than a tertiary degree (score below 3.6) as 1 in a variable called education
-demo$education <- ifelse(demo$SES2_SESBLDG < 3.6, 1, 0)
-colnames(demo)[1]="pv_pseudonym"
+demo_bl_wo_duplicates$education <- ifelse(demo_bl_wo_duplicates$SES2_SESBLDG < 3.6, 1, 0)
+colnames(demo_bl_wo_duplicates)[1]="pv_pseudonym"
 
-wml=merge(wml, demo[,c("pv_pseudonym", "education")], by = "pv_pseudonym", all.x=T)
+wml=merge(wml, demo_bl_wo_duplicates[,c("pv_pseudonym", "education")], by = "pv_pseudonym", all.x=T)
 
 ##########################################################################
 # Load MRI dates (for LST, the earlier scan ("bl") was always selected)
@@ -124,11 +127,6 @@ medanam_fu <- medanam_fu %>%
 
 #Duplicates in medanam_fu (use only those from FU_A1, not A1_FU1_ANSCH which has
 #been usually performed before the 2nd #MRI, maybe this refers to postal questionnaires)
-#medanam_fu_duplicates <-
-#  medanam_fu  %>% 
-#  arrange(dat_medanam_fu) %>%
-#  filter(duplicated(.[["SIC"]]))
-
 medanam_fu_wo_duplicates <-
   medanam_fu  %>% 
   filter(GRUPPE=="A1_FU1") 
@@ -484,11 +482,6 @@ cerad_bl_tmt_wo_duplicates <-
   cerad_bl_tmt %>%
   arrange(TMT_DATUM) %>%
   filter(!duplicated(.[["SIC"]]))
-#cerad_bl_young_wo_duplicates <-
-#  cerad_bl_young %>%
-#  arrange(WORTLISTE_DATUM) %>%
-#  filter(!duplicated(.[["SIC"]]))
-#colnames(cerad_bl_young_wo_duplicates)[2]="CERAD_DATUM"
 
 #Only duplicated in cerad_fu (where the earlier one seems to be the correct one)
 cerad_fu=readxl::read_xlsx("/data/gh_gr_agingandobesity_share/life_shared/Data/Raw/Questionnaires_raw/2022_PV609_Beyer/Adult FU1/PV0609_T00044_NODUP.xlsx") 
@@ -754,31 +747,49 @@ exclude_ids = wml_long %>%
 wml_long_excl <- filter(wml_long, !(mrt_pseudonym %in% exclude_ids$mrt_pseudonym))
 
 ## To identify exclusion reasons
-exclude_ids = wml_long %>%
+columns=c("excl_neurology", "excl_dement", "excl_radio", "excl_medcentral", "excl_age")
+Nexclusion=data.frame(matrix(nrow = 1, ncol = length(columns))) 
+colnames(Nexclusion)=columns
+
+excludeids1 = wml_long %>%
   group_by(mrt_pseudonym) %>%
   filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1)
-excl_path=length(unique(exclude_ids$mrt_pseudonym))
-exclude_ids = wml_long %>%
+excl_path=length(unique(excludeids1$mrt_pseudonym))
+Nexclusion["excl_neurology"]=excl_path
+d1 <- filter(wml_long, !(mrt_pseudonym %in% excludeids1$mrt_pseudonym))
+
+
+excludeids2 = d1 %>%
   group_by(mrt_pseudonym) %>%
-  filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 | MMSE == 1 | dementia_fu == 1 )
-excl_dement=length(unique(exclude_ids$mrt_pseudonym))
-exclude_ids = wml_long %>%
+  filter(MMSE == 1 | dementia_fu == 1 )
+excl_dement=length(unique(excludeids2$mrt_pseudonym))
+Nexclusion["excl_dement"]=excl_dement
+d2 <- filter(d1, !(mrt_pseudonym %in% excludeids2$mrt_pseudonym))
+
+
+excludeids3 = d2 %>%
   group_by(mrt_pseudonym) %>%
   filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 | MMSE == 1 | dementia_fu == 1 |
            radio_usable == 1 | radio_lesion == 1 | radio_tumour == 1 | qa_check ==1 | qa_check == 3)
-excl_radio=length(unique(exclude_ids$mrt_pseudonym))
-exclude_ids = wml_long %>%
+Nexclusion["excl_radio"]=length(unique(excludeids3$mrt_pseudonym))
+d3 <- filter(d2, !(mrt_pseudonym %in% excludeids3$mrt_pseudonym))
+
+excludeids4 = d3 %>%
   group_by(mrt_pseudonym) %>%
   filter(epilepsy == 1| stroke ==1 | MS == 1 | parkison == 1 | MMSE == 1 | dementia_fu == 1 |
            radio_usable == 1 | radio_lesion == 1 | radio_tumour == 1 | qa_check ==1 | qa_check == 3|
            med_central == 1 )
-excl_medcentral=length(unique(exclude_ids$mrt_pseudonym))         
+Nexclusion["excl_medcentral"]=length(unique(excludeids4$mrt_pseudonym))         
+d4 <- filter(d3, !(mrt_pseudonym %in% excludeids4$mrt_pseudonym))
 
 # Exclude participants out of the specified age range (45 -85y at baseline)
 ids = wml_long_excl %>% 
-  filter(time == "bl" & !is.na(age) & age>45 & age < 85)
+  filter(time == "bl" & !is.na(age) & age>=45 & age <= 85)
+Nexclusion["excl_age"]=length(unique(wml_long_excl$sic))-nrow(ids)
+#write.csv(Nexclusion, "N_excludedSubjects.csv", row.names = F)
 
 wml_long_excl_a <- filter(wml_long_excl, (mrt_pseudonym %in% ids$mrt_pseudonym))
+
 
 
 ############################################################################
@@ -788,7 +799,9 @@ wml_long_excl_a <- wml_long_excl_a %>%
   mutate_at(.vars = c("learning", "recall", "recognition", "sem_f", "phon_f", "TMT", 
                       "proc"), ~(scale(.) %>% as.vector)) 
 
-# calculate composite scores for cognitive functions depending on number of available tests
+# calculate composite scores for cognitive functions depending on number of available tests 
+# reversal of TMT-based tests was done previously
+# higher values are better!
 wml_long_excl_a$exfunct <- apply(wml_long_excl_a[, c("phon_f", "sem_f", "TMT")], 1, mean, na.rm=TRUE)
 wml_long_excl_a$memo <- apply(wml_long_excl_a[, c("learning", "recognition", "recall")], 1, mean, na.rm=TRUE)
 wml_long_excl_a$globalcog <- apply(wml_long_excl_a[, c("exfunct", "memo", "proc")], 1, mean, na.rm=TRUE)
@@ -797,6 +810,8 @@ wml_long_excl_a$globalcog <- apply(wml_long_excl_a[, c("exfunct", "memo", "proc"
 wml_long_excl_a <- wml_long_excl_a %>%
   mutate_at(.vars = c("exfunct", "memo", "globalcog"), ~(scale(.) %>% as.vector))
 
+write.csv("/data/pt_life_whm/Results/Tables/full_dataset_with_missing_wml_long_excl_a.csv",
+          row.names = F)
 ############################################################################
 # Missing values
 ############################################################################
@@ -871,10 +886,10 @@ plot(imp)
 ############################################################################
 # calculate between and within measures of Age, SBP, WHR, asinh(WML)
 ############################################################################
-imp_l <- mice::complete(imp, "long", include = TRUE)
+imp_l <- mice::complete(imp, action = 'long', include = TRUE)
 
 imp_l <- imp_l %>%
-  group_by(mrt_pseudonym, .imp) %>%
+  group_by(subj, .imp) %>%
   mutate(
     subj=as.factor(subj),
     cesd = asinh(cesd),
@@ -883,7 +898,7 @@ imp_l <- imp_l %>%
     WHR_base = ifelse(time == "bl", WHR, lag(WHR)),
     age_change = ifelse(time == "bl", 0, age - age_base),
     DBP_change = ifelse(time == "bl", 0, DBP - DBP_base),
-    WHR_change = ifelse(time == "bl", WHR - WHR_base),
+    WHR_change = ifelse(time == "bl", 0, WHR - WHR_base),
     asinh_wml = asinh(wml),
     asinh_wml_base = ifelse(time == "bl", asinh_wml, lag(asinh_wml)),
     asinh_wml_change = ifelse(time == "bl", 0, asinh_wml - asinh_wml_base))
@@ -893,7 +908,7 @@ imp.itt <- mice::as.mids(imp_l)
 
 #write full dataset
 setwd("/data/pt_life_whm/Results/Tables/")
-miceadds::write.mice.imputation(imp.itt , "imputed_data" )
+miceadds::write.mice.imputation(imp.itt , "imputed_data_08.5.23", mids2spss=FALSE)
 
 
 

@@ -1,56 +1,55 @@
-run_conf_LME<- function(imp, model,n_it=10){
+run_conf_LME_sexstr<- function(imp, sex, model,n_it=10){
     # Calculates model results for a MIDS (Multiply Imputed Data Set) from mice.
     # Model can take values "M1_VRF", "M2_exfunct" and "M3_globalcog".
   
     #########################
     # Frequentist statistics
     #########################
-    # Pool using the mice standard workflow to collect results from 5 imputed datasets
+    # Pool using the mice standard workflow to collect results from imputed datasets
     if (model == "M1_VRF"){
     res <- with(imp, lmerTest::lmer(formula = 'asinh_wml ~ age_base + age_change + 
                                  DBP_base + age_change:DBP_base + DBP_change  + 
-                                 WHR_base + WHR_base:age_change + WHR_change + 
-                                 sex + BPmed + TIV + (1|subj)'),
+                                 WHR_base + WHR_base:age_change + WHR_change +
+                                    BPmed + TIV + (1|subj)'),
                 REML=F, na.action = na.omit)
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_', sex, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'asinh_wml ~ age_base + age_change + 
                                  DBP_base + age_change:DBP_base + DBP_change  + 
-                                 WHR_base + WHR_base:age_change + WHR_change + 
-                                 sex + BPmed + TIV + (1|subj)'),
+                                 WHR_base + WHR_base:age_change + WHR_change + BPmed + TIV + (1|subj)'),
                 REML=F, na.action = na.omit)
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_freq_imp_plot', '.RData'))
     }
     if (model == "M2_exfunct"){
     print("running M2")
     res <- with(imp, lmerTest::lmer(formula = 'exfunct ~ age_base + age_change + 
                                  asinh_wml_base + asinh_wml_change + 
-                                 sex + education + cesd + TIV + (1|subj)'),
+                                  education + cesd + TIV + (1|subj)'),
                                  REML=F, na.action = na.omit)
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'exfunct ~ age_base + age_change + 
                                  asinh_wml_base + asinh_wml_change + 
-                                 sex + education + cesd + TIV + (1|subj)'),
+                                  education + cesd + TIV + (1|subj)'),
                  REML=F, na.action = na.omit)
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_freq_imp_plot', '.RData'))
     }
     if (model == "M3_globalcog"){
     res <- with(imp, lmerTest::lmer(formula = 'globalcog ~ age_base + age_change + 
                                  asinh_wml_base + asinh_wml_change + 
-                                 sex + education + cesd + TIV + (1|subj)'),
+                                  education + cesd + TIV + (1|subj)'),
                      REML=F, na.action = na.omit)
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'globalcog ~ age_base + age_change + 
                                  asinh_wml_base + asinh_wml_change + 
-                                 sex + education + cesd + TIV + (1|subj)'),
+                                  education + cesd + TIV + (1|subj)'),
                                   REML=F, na.action = na.omit,
                  REML=F, na.action = na.omit)
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_freq_imp_plot', '.RData'))
     }
 
     
@@ -74,11 +73,11 @@ run_conf_LME<- function(imp, model,n_it=10){
         tmp_bf <- generalTestBF(formula = as.formula("asinh_wml ~ age_base + age_change +
                                                                  DBP_base + age_change:DBP_base + DBP_change +
                                                                  WHR_base + WHR_base:age_change + WHR_change +
-                                                                 sex + BPmed + TIV + subj"), 
+                                                                  BPmed + TIV + subj"), 
                                 data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj", 
                                 multicore = T, whichModels="top",
                                 neverExclude = c("age_base", "age_change$", "^DBP_base$", 
-                                                 "^WHR_base$", "sex", "BPmed", "TIV", "subj")
+                                                 "^WHR_base$",  "BPmed", "TIV", "subj")
         )
         bf_extracted=extractBF(tmp_bf,logbf = F)
         bf_extracted$pred=rownames(bf_extracted)
@@ -88,10 +87,10 @@ run_conf_LME<- function(imp, model,n_it=10){
         tmp_bf_chains <- generalTestBF(formula = as.formula("asinh_wml ~ age_base + age_change +
                                                                  DBP_base + age_change:DBP_base + DBP_change +
                                                                  WHR_base + WHR_base:age_change + WHR_change +
-                                                                 sex + BPmed + TIV + subj"),
+                                                                  BPmed + TIV + subj"),
                                        data=comp_imp[comp_imp$.imp==i,], whichRandom = "subj",  multicore = T,
                                        neverExclude = c("age_base", "age_change", "DBP_base", "DBP_change",
-                                                        "WHR_base", "WHR_change", "sex", "BPmed", "TIV", "subj")
+                                                        "WHR_base", "WHR_change",  "BPmed", "TIV", "subj")
         )
         
         siding_factor=vector()
@@ -119,7 +118,7 @@ run_conf_LME<- function(imp, model,n_it=10){
         }
         list2save=list(tmp_bf,chains, bf_extracted)
         save(list2save, 
-             file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_imp_',i, '.RData'))
+             file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_imp_',i, '.RData'))
         }
         
         
@@ -134,18 +133,18 @@ run_conf_LME<- function(imp, model,n_it=10){
     if (model == "M2_exfunct"){
       print("running model M2")
       for (i in c(1:imp$m)){
-        if(!file.exists(paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_imp_',i, '.RData'))){
+        if(!file.exists(paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_imp_',i, '.RData'))){
       
       tmp=comp_imp[comp_imp$.imp==i,]
       modeldat=tmp[!is.na(tmp$exfunct),] #remove timepoints with NA in dependent variable
       
       tmp_bf=generalTestBF(formula = as.formula("exfunct ~ age_base + age_change +
                                                                asinh_wml_base + asinh_wml_change +
-                                                               sex + education + cesd + TIV + subj"),
+                                                                education + cesd + TIV + subj"),
                                        data=modeldat, whichRandom = "subj",
                                        multicore = T,
                                        neverExclude = c("age_base", "^age_change$",
-                                                        "sex", "education", "cesd",
+                                                         "education", "cesd",
                                                         "TIV", "subj")
        )
 
@@ -171,10 +170,10 @@ run_conf_LME<- function(imp, model,n_it=10){
       
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_imp_',i, '.RData'))
       }
       else {
-        load(paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_imp_',i, '.RData'))
+        load(paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_imp_',i, '.RData'))
       }
       if (i==1){
         bfall=bf_extracted}
@@ -199,11 +198,11 @@ run_conf_LME<- function(imp, model,n_it=10){
         modeldat=tmp[!is.na(tmp$globalcog),] #remove timepoints with NA in dependent variable
         tmp_bf <- generalTestBF(formula = as.formula("globalcog ~ age_base + age_change +
                                                                    asinh_wml_base + asinh_wml_change +
-                                                                   sex + education + cesd + TIV + subj"), 
+                                                                    education + cesd + TIV + subj"), 
                                         data=modeldat, whichRandom = "subj",  
                                         multicore = T,
                                         neverExclude = c("age_base", "^age_change$",
-                                                         "sex", "education", "cesd", 
+                                                          "education", "cesd", 
                                                          "TIV", "subj")
         )
         
@@ -235,7 +234,7 @@ run_conf_LME<- function(imp, model,n_it=10){
         }
         list2save=list(tmp_bf,chains, bf_extracted)
         save(list2save, 
-             file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/workspace_',model, '_imp_',i, '.RData'))
+             file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model,'_',sex, '_imp_',i, '.RData'))
         }
 
 

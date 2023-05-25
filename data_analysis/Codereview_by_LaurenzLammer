@@ -1,0 +1,40 @@
+calc_models_on_realdata 
+- line 21: Kommentar ändern, weil die Interaktionen und nicht die main effects von baseline DBP & baseline WHR getestet werden #M1: effect of baseline DBP:age change on WML change (also calculated E1a - E1c: effects of baseline WHR:age change, change DBP and change WHR)
+- lines 22, 25, 28: n_it nicht angegeben und kein default in run_conf_LME.R definiert (gleiches gilt bei run_exp_LME)
+- sollen für die exp_LMEs noch die assumptions getestet werden?
+
+run_conf_LME
+- line 41: Kommentaränderungsvorschlag: #Pool by calculating mean and standard deviation of BFs across all imputed datasets 
+- line 42: add following comment: # extract imputed datasets to run functions on individual datasets
+- lines 10, 18, 25: nur so aus Interesse: Why have you forsaken R Mundry's gospel and calculated full-null Anovas on all predictors?
+- line 43ff: hier könnte mensch den Code umschreiben, um nicht alle 15 Modelle berechnen zu lassen, sondern nur die 5, die mensch wirklich braucht - dazu müsste mensch das Argument: whichModels = "top" hinzufügen - leider führt das dann dazu, dass das full model nicht mehr berechnet wird (also erst einmal nur die 4 null models) --> daher müsste mensch dann nochmal generalTestBF mit allen Variablen in neverexclude rechnen lassen und die Ergebnisse dann zusammenführen - etwas chaotischerer Code aber vermutlich schneller und weniger rechenintensiv 
+- line 68: columnFilter="^id$" könnte noch um andere irrelevante Variablen erweitert werden  
+
+calc_models_on_realdata
+- warum VIF nicht mit in test_LME_assumptions & warum nur für 1 dataset?
+- line 47: Variable i ist soweit ich das verstehe nicht definiert? Sollte da einfach 1 stehen?
+
+test_LME_assumptions
+- R Mundry hat für diagnostische Plots eine Funktion geschrieben: source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/diagnostic_fcns.r")
+	- damit sind alle Plots in einer Grafik, finde ich ganz schön
+- qqp & homoscedasals als Variablen zu speichern ist nicht nötig, oder? - aber auch unwichtig
+
+run_exp_LME
+- passende Kommentare zu run_conf_LME gelten auch hier
+- line 84: rep(i,1) könnte auch durch einfach nur i ersetzt werden - auch bei anderen Modellen
+- line 88: also wir erwarten, dass Männer weniger WML ansammeln? Ist das bei WM anders als bei GMV?
+- lines 118-119: change argument to neverExclude = c("age_base", "^age_change$", "^DBP_base$", "^age_change:sex$", "^age_change:DBP_base$", "^sex:DBP_base$" "WHR_base","WHR_change", "DBP_change", "BPmed", "TIV", "subj") --> dann sollten nur 2 Modelle berechnet werden --> entsprechend lines 122-3 ändern - analog in linies 166-8 & 211-3 & 255-7
+- line 227 & 272: wir erwarten also, dass sich WML bei Männern stärker auf die exfunct & global cog funct auswirken, richtig?
+
+prepare_data.R
+
+- line 56: wenn Du das so codest, schließt du bei Prob. mit Pilot & Haupt immer den Pilot run aus & bei Pilot & Pilot 2 immer Pilot 2 - ist es ggf sinnvoller Pilot 2 drin zu behalten?
+- line 76-79 & 102-110: hier behältst du jetzt die Pilot und schmeisst Haupt raus
+- lines 132-134: reduces n from 3015 to 1652 but length(which(duplicated(medanam_fu$SIC))) = 1072 --> difference of 291 --- perhaps you could keep info for participants that have data from A1_FU1_ANSCH but not from FU_A1
+- lines 141-143: analogous to 132-134
+- lines 189-196 erscheinen mir redundant
+- irrelevant aber eine nice Funktion: statt immmer einzelne dfs zu mergen kannst du auch eine list der dfs erstellen und dann die tidyverse-Funktion reduce benutzen - das spart Code, mensch kann aber auch nicht so kleinteilig jeden Schritt überprüfen
+- lines 487-491: wenn CERAD_young gar nicht verwendet werden soll, dann würde ich es auch im darauffolgenden Code rausnehmen der Übersichtlichkeit halber
+- line 661: redundant
+- der Pfad zu medianam_fu exitiert nicht (mehr), konnte code danach daher auch nicht mehr ausführen, sieht aber gut aus :)
+- line 779: >= und =< oder nicht?

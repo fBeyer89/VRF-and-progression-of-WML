@@ -48,7 +48,7 @@ res3=run_conf_LME(imp.itt, "M3_globalcog",100)
 
 #Test the models for exploratory hypothesis E2a_sex, E2a_DBP, E2a_WHR & E3a - E3c
 source("run_exp_LME.R")
-res=run_exp_LME(imp.itt, "E2a_sex",100)
+res=run_exp_LME(imp.itt, "E2a_sex",10)
 
 res2=run_exp_LME(imp.itt, "E2b_DBP",100)
 res3=run_exp_LME(imp.itt, "E2c_WHR",100)

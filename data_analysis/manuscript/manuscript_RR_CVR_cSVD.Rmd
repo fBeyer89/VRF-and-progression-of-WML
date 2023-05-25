@@ -1,0 +1,866 @@
+---
+title: "Investigating the impact of vascular risk factors on the progression of white matter lesions"
+author:
+  - Frauke Beyer, PhD [1][2]
+  - Laurenz Lammer [1]
+  - Markus Loeffler [4][5]
+  - Steffi Riedel-Heller [5][6]
+  - Arno Villringer, Prof. [1][2][3]
+  - A. Veronica Witte, PhD [1][2]
+  
+  
+date: 1 Department of Neurology, Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig \newline 2 CRC 1052 "Obesity Mechanisms", Subproject A1, University of Leipzig \newline 3 Bordeaux Population Health Research Center, University of Bordeaux, Inserm, UMR 1219, Bordeaux, France \newline 4 Institute for Medical Informatics, Statistics and Epidemiology; University of Leipzig \newline 5 Leipzig Research Centre for Civilisation Diseases (LIFE), Leipzig \newline 6 Institute of Social Medicine, Occupational Health and Public Health, University of Leipzig , Leipzig \newline 7 Day Clinic for Cognitive Neurology, University Hospital Leipzig, University of Leipzig 
+
+#date: "`r format(Sys.time(), '%B %e, %Y')`"
+output: word_document
+#  bookdown::pdf_book: 
+#    fig_caption: yes
+#    always_allow_html: true
+#    number_sections: yes
+#    toc: yes
+bibliography: "bibliography.bib" 
+
+---
+
+```{r "Package loading", include=FALSE}
+library("lme4")
+library("lmerTest") 
+library("BayesFactor")
+library(DiagrammeR)
+# ensure that lmerTest doesn't mask lmer, which would cause us multiple problems
+lmer <- lme4::lmer
+library(broom.mixed)
+library(kableExtra)
+library(tidyverse)
+library(modelsummary)
+
+setwd("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/") 
+source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/diagnostic_fcns.r")
+source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/glmm_stability.r")
+source('run_conf_LME.R')
+source('run_exp_LME.R')
+source('test_LME_assumptions.R')
+source("plotting/scatter_plots.R")
+```
+
+## Abstract
+Cerebral small vessel disease (cSVD) is a major brain pathology contributing to cognitive decline and dementia. Vascular risk factors have been associated with imaging markers of cSVD such as white matter lesions, yet longitudinal studies have not comprehensively assessed these effects for abdominal obesity or reported sex/gender-specific effects. In this pre-registered analysis of a longitudinal population-based neuroimaging cohort, we aim to fill this gap by providing a comprehensive analysis of the association of blood pressure on the progression of white matter lesions in sex/gender-stratified analyses. We will also investigate the link of white matter lesion progression and cognitive performance. Further, we will explore the contribution of baseline abdominal obesity to white matter lesion progression and explore whether the vascular risk factors are associated with specific locations of white matter lesions.
+
+## Introduction 
+Staying cognitively healthy is of paramount importance when we age and dementia is among the most feared diseases in our society (Hajek & König, 2020). Cerebral small vessel disease (cSVD) has been increasingly recognized as a major underlying pathology of cognitive decline and dementia (Bos et al., 2018; Sweeney et al., 2018) 
+CSVD describes pathologies of the brain’s small arterioles, capillaries and venules which manifest on magnetic resonance imaging (MRI) as focal lesions (white matter lesions (WML), lacunes, microbleeds, dilated perivascular spaces) and in globally reduced white matter coherence and gray matter atrophy (Wardlaw et al., 2019). Most commonly, WML volume and location are used as a proxy for cSVD due to relatively easy automatic quantification on brain images.
+Several studies have shown that the presence and extent of cSVD neuroimaging markers are predictive for stroke, future cognitive decline and dementia (Debette et al., 2019). 
+While WML are present in a large proportion of older adults, their occurrence is not random, but their location and extent strongly depends on the presence of vascular risk factors (Jorgensen et al., 2018). It is well known that elevated blood pressure  and hypertension are associated with the appearance and progression of WML in mid and late life (Dufouil et al., 2001; Jansen et al., 2021; Scharf et al., 2019; Vermeer et al., 2007; Williamson et al., 2018) but see (Dickie et al., 2016; Sachdev et al., 2007). While both systolic and diastolic blood pressure (DBP) are important predictors, effects seem to be more pronounced for DBP (Zhang et al., 2020). Randomized controlled trials have provided evidence that intensive blood pressure control can reduce the progression of WML in hypertensive and diabetic patients(de Havenon et al., 2019; Nasrallah et al., 2019; Zhang et al., 2019), yet no consensus on how to specifically target cSVD and related cognitive decline has been reached (Wardlaw et al., 2019).
+More recently, abdominal obesity has emerged as a risk factor for cSVD in cross-sectional studies (Higuchi et al., 2017; Kim et al., 2017; Lampe et al., 2019; Morys et al., 2021; Veldsman et al., 2020; Vuorinen et al., 2011; Yamashiro et al., 2014). Mendelian randomization suggested that larger abdominal fat depots (measured as waist-to-hip ratio) are more predictive for WML than overall obesity (measured as body mass index) (Marini et al., 2020). This effect was largely independent of DBP and glucose metabolism. Along these lines, several studies reported an association between abdominal obesity and WML in deep white matter regions as opposed to hypertension-related periventricular WML, hinting to the involvement of different pathophysiological mechanisms (Armstrong et al., 2020; Griffanti et al., 2018; Lampe et al., 2019; Veldsman et al., 2020). One of those mechanisms might be the circulation of systemic inflammatory markers, secreted by abdominal fat tissue, which initiate pathological processes such as endothelial damage and blood brain barrier leakage in the cerebral vasculature of the deep white matter (Wardlaw et al., 2019). Yet, longitudinal evidence is scarce and the RUN-DMC study showed that while high baseline waist circumference predicted stronger increase in WML from baseline to follow-up, no predictive effects of continuous waist circumference or body mass index on cross-sectional or longitudinal WML were found (Arnoldussen et al., 2019). Thus, the impact of abdominal obesity on WML progression remains to be established. 
+Self-identified gender, which is assessed in most studies using self-reported binary categories and often misinterpreted as (biological) sex, is another important predictor of WML. In population-based studies, women tend to show larger and more severe WML (De Leeuw et al., 2001; Fatemi et al., 2018; Sachdev et al., 2009) while in hospital-based studies, men are overrepresented and show severe cSVD (with stroke or cognitive presentation) more often (Sanchez et al., 2021). Women and men differ in their vascular risk factor profile, e.g. the incidence of smoking and hypertension tends to be higher in men, while women tend to develop a more unfavorable abdominal fat distribution after menopause. Additionally, the neuroprotective effects of estrogens are reduced after menopause which might contribute to increased susceptibility of women to neurovascular degeneration and dementia (Dufouil et al., 2014). We therefore hypothesize that higher blood pressure and abdominal obesity might be more strongly associated with WML progression in women compared to men. 
+Yet, while WML have been associated with decline in executive function and other cognitive domains in older adults, their importance for gender-specific cognitive performance is unclear (Kynast et al., 2018). Women have previously not performed worse in cognitive tests despite having higher WML load (Sachdev et al., 2009). Therefore, WML progression might be less negatively associated with cognitive performance in women compared to men. Few studies to date have reported sex/gender-stratified data regarding the association of vascular risk factors and WML, as well as WML and cognitive outcomes. This ‘gender data gap’ hampers a better understanding of gender-specific risks and potential prevention strategies. 
+Here, we therefore aim to replicate previous findings on the relationship of higher blood pressure, more WML progression and worsening of cognitive function in a large cohort of population-dwelling older adults. 
+In exploratory analyses we aim to extend these findings towards abdominal obesity, a risk factor which has been understudied in longitudinal designs. We will explore gender-by-risk factor interactions for WML progression and gender-by-WML progression interaction for cognitive outcomes. We will also report gender-stratified results for both risk factors if no interaction appears. Finally, we will explore the spatial distribution of new WML related to the different risk factors.
+
+## Aims and hypotheses
+### Confirmatory analyses
+Based on the literature and power analyses, we will perform replication analyses for the following hypotheses:
+- H1: Higher DBP at baseline predicts stronger increase of WML volume at follow-up.
+- H2: Stronger WML progression is associated with stronger decline in executive cognitive function.
+- H3: Stronger WML progression is associated with stronger decline in global cognitive function.
+
+### Exploratory analyses
+We will test the following hypotheses in exploratory analyses. These may be underpowered.
+- E1a: Higher WHR at baseline predicts stronger increase of WML volume at follow-up.
+- E1b: Higher change in WHR predicts stronger increase of WML volume at follow-up.
+- E1c: Higher change in DBP predicts stronger increase of WML volume at follow-up.
+
+- E2a: WML progression is more pronounced in women.
+- E2b: There is an interactive effect of gender and DBP on WML progression, where in women DBP has a stronger effect than in men.
+- E2c: There is an interactive effect of gender and WHR on WML progression, where in women WHR has a stronger effect than in men. 
+- E3a: There is an interactive effect of gender and WML progression on executive cognitive function where in women WML progression is associated with less decline in executive cognitive function.
+- E3b: There is an interactive effect of gender and WML progression on global cognitive function where in women WML progression is associated with less decline in global cognitive function. 
+If the interactions are not significant, we will  report gender-stratified results for according to the SAGER guidelines (Heidari et al., 2016).
+Finally, we will explore the spatial distribution of incident WML depending on the risk factor profile and test the mediating effects of WML on the association of vascular risk factors and cognitive function. 
+For a summary table of planned analysis, see Table 7.
+
+## Methods
+### Existing data
+This project is an analysis in the LIFE-Adult study sample, a longitudinal, two-wave, population-based study conducted in the city of Leipzig, Germany from 2011 until 2021.
+Baseline characteristics of the LIFE-Adult sample (Loeffler et al., 2015), the baseline association of hypertension and WHR with voxel-wise WML volume (Lampe et al., 2019) and the cross-sectional link between WML volume and different cognitive domains (Lampe et al., 2017) in this sample have been previously published. 
+At the time of this stage-1 protocol, we have access to the baseline anthropometric and medical data and have preprocessed and quality-controlled the imaging data of both time points (bias control level 2).
+We have not gained access to the follow-up anthropometric, medical and cognitive data and have not explored any associations of these measures with WML volume beyond the baseline investigations cited above.
+
+### Data Availability Plan
+Due to potential identifiability of individuals from demographic and medical information, we will share a surrogate version of the dataset on https://github.com/fBeyer89/VRF-and-progression-of-WML along with the analysis code (Nowok et al., 2016). Statistical maps from whole-brain analysis will be published on NeuroVault. Raw data of the LIFE-Adult cohort can be requested via the LIFE data center (https://ldp.life.uni-leipzig.de/).
+
+### Ethics Statement
+The LIFE-Adult study has been approved by the ethics committee of the University of Leipzig and was conducted according to the declaration of Helsinki. All participants gave written informed consent. 
+
+### Data collection and preparation
+This project is part of a larger population-based epidemiological study LIFE-Adult. LIFE-Adult has investigated 10.000 individuals from the Leipzig area, who underwent genotyping and deep phenotyping at up to two time points (including extensive questionnaires, MRI and cognitive testing in a subgroup of N ~ 2700). 
+Recruitment and inclusion criteria as well as more information on the study design and objectives can be found in (Loeffler et al., 2015) and Engel et al. (Engel et al., 2022).
+Baseline assessments took place from 2011 to 2014 and the follow-up visits were scheduled between 2017 to 2021. For the follow-up visit, participants from the LIFE-Adult MRI cohort (Nbaseline = ~2700) were re-invited to participate in medical assessments, cognitive testing and MRI scanning. In total, 1077 participants underwent MRI at follow-up. 
+For this analysis, we will include all participants who were aged between 45 and 85 years at the baseline assessment based on recent studies showing WML volume to increase from the fifth life decade on (d'Arbeloff et al., 2019; Wen et al., 2009). All included participants were scanned twice with a mean time between scans of 6 years (standard deviation=1.9 years).
+
+### Anthropometrics
+Waist and hip circumferences were taken by trained study staff using an ergonomic circumference measuring tape (SECA 201) to the nearest 0.1 cm at baseline and follow-up. WHR was calculated by dividing waist by hip circumference. We will use baseline WHR and change in WHR, calculated as difference between follow-up and baseline (i.e. WHR_change = WHR_followup – WHR_baseline), as independent variables of interest.
+
+### Blood pressure 
+Diastolic blood pressure was measured three times at 3-min intervals using an automatic oscillometric blood pressure monitor (OMRON 705IT, OMRON Medizintechnik Handelsgesellschaft mbH) in participants seated for at least 5 minutes at baseline and followup. We will calculate the average of the three DBP measurements for our analysis. We will use baseline DBP and change in DBP, calculated as difference between follow-up and baseline (i.e. DBP_change = DBP_followup – DBP_baseline), as independent variables of interest.
+
+### Cognitive Assessment
+In both LIFE-Adult assessments, participants underwent the Consortium to Establish a Registry for Alzheimer's Disease (CERAD) -plus test-battery, an established set of neurocognitive tests designed to detect early cognitive changes related to Alzheimer's disease (AD) (Morris et al., 1989). The applied version additionally includes the Trail-Making-Test (TMT) and phonemic fluency (S-words) to assess executive function and verbal fluency independent of semantic memory. 
+We will derive a composite score of executive function and a global cognitive score similar to previous studies (Beyer et al., 2017; Kharabian Masouleh et al., 2016; Oosterman et al., 2010).
+The executive function summary score will be calculated as sum of z-scored time to complete TMT part B over time to complete TMT part A , phonemic and semantic fluency (verbal fluency). 
+Z_exec = [– z (time for TMT part B/time for TMT part A)+ z_phonemic fluency + z_semantic fluency]/3
+The global score will be based on the executive function score, processing speed and a composite memory score. 
+The processing speed score is given by the Z-scored negative value of the time taken to complete part A.
+Z_processing_speed = -z(TMT time for part A).
+For the memory score, we will use learning, recall and recognition from the CERAD word list. Learning will be defined as the sum of three consecutive learning trials of the CERAD word list (10 words), recall as the sum of correctly recalled words after a delay, in which participants performed a nonverbal task, and recognition as the number of correctly recognized words out of a list of 20 presented afterwards. 
+Z_memory = (z_sum_learning + z_recall + z_recognition)/3
+The global cognitive performance score was derived by summing up the z-scores from all four domains:
+Z_global_cognition = Z_exec + Z_proc + Z_memory/3 
+All individual sub-scores will be Z-scored across timepoints prior to creating composite scores. The composite scores for executive function and global cognition will again be Z-scored.
+
+### Imaging acquisition and preprocessing
+At baseline and follow-up, anatomical and lesion-sensitive imaging was acquired on a 3T MAGNETOM Verio scanner (Siemens, Erlangen, Germany) with a 32-channel head coil. Anatomical imaging was done with a T1-weighted magnetization prepared rapid acquisition gradient echo (MPRAGE) sequence with the following parameters (flip angle = 9 degrees,relaxation time [TR] = 2,300 ms, inversion time [TI] = 900 ms, echo time [TE] = 2.98 ms, 1-mm isotropic resolution, acquisition time [AT] = 5.10 minutes), and the lesion-sensitive imaging was performed with a fluid-attenuated inversion-recovery (FLAIR) sequence (TR = 5,000 ms, TI = 1,800 ms, TE = 395 ms,1 × 0.49 × 0.49 mm resolution, AT = 7.02 minutes).
+
+### Lesion Segmentation
+The longitudinal pipeline of the Lesion Segmentation Toolbox (version 3.0.0, run on MATLAB version 9.10) was used to estimate WML progression (Schmidt & Wink, 2017). This pipeline estimates the location of stable lesions as well as regression and progression of lesions over time (Schmidt et al., 2019). First, we performed cross-sectional lesion segmentation using the Lesion Prediction algorithm with its default parameters. Then, we applied the longitudinal pipeline to the cross-sectional runs and obtained voxel-wise maps of lesion change (LCL maps). In these three-valued whole-brain maps, 1 indicates a regression of lesion volume, 2 indicates a stable lesion and 3 indicates a newly appeared lesion in this voxel. 
+For baseline lesion volume, we summed up the volume of all LCL voxels with a value of 2 and for follow-up lesion volume, we added the volumes of all LCL voxels with a value of 1 (regressed lesion voxels) or 3 (novel lesion voxels). 
+For our analysis, we will calculate asinh-transformation of baseline WML volume (asinh(WMLBL))and change as difference of asinh-transformed WML volume at follow-up and baseline (WMLchange=asinh(WMLFU)-asinh(WMLBL)) to achieve a normal distribution of regression residuals. 
+During visual quality control, we checked whether the lesions marked in the LCL were confounded due to poor scan quality, lesion regression or brain pathologies at baseline or follow-up. We gave the following LCL quality ratings: issues with MRI data quality, e.g. due to motion (LCL quality =1), ventricular expansion which led to regression of lesion voxels in some cases (LCL quality =2) and brain pathologies such as stroke or congenital lesions (LCL quality =3).  
+### Anatomical Preprocessing
+T1-weighted imaging was processed with the longitudinal stream of FreeSurfer version 5.3.0 to derive estimated total intracranial volume (TIV) (Reuter et al., 2012). We will z-score the value to achieve more stable model fitting.
+
+### Medical, demographic and questionnaire data
+Participants were asked to report previous cardiovascular and other diseases as well as the intake of medication. Self-reported medication was classified according to the Anatomical Therapeutic Chemical (ATC) Classification System. 
+The intake of anti-hypertensive medication will be defined based on self-reported intake of hypertensive medication in the cardiological questionnaire or the intake of anti-hypertensive medication based on the list of medication (see Supplementary Table 1). Here, we will use ATC codes starting with "C02, "C03", "C07", "C08", "C09" as indicators of anti-hypertensive medication. 
+The use of centrally active medication will be defined based on the self-reported intake of medication with the ATC codes M03B (muscle relaxants, centrally acting agents), N02A (opioids), N03 antiepileptics, N04 anti-parkinson drugs, N05 psycholeptics, N06A antidepressants, N06B psychostimulants, agents used for ADHD and nootropics, N06D anti-dementia drugs (except for N06Dx02, ginkgo folium) or N07A parasympathomimetics (see Supplementary Table 1).
+Participants underwent the SIDAM (structured interview for the diagnosis of dementia) which includes the Mini Mental State Examination (MMSE) at baseline and follow-up.
+Self-reported level of education will be dichotomized into a binary variable indicating the attainment of tertiary education (Lampert et al., 2013). We will use 3.6 as cut-off. Education was only assessed at baseline.
+For the assessment of depressive symptoms, participants filled in the German version of the Center for Epidemiological Studies-Depression scale at baseline and follow-up. We will derive the summary score ranging from 0 to 60. 
+
+### Data exclusion
+We will exclude participants with neurological or psychiatric disease at baseline or follow-up (i.e. radiological finding of ischemic, traumatic or hemorrhagic lesion in MRI, incidental finding leading to non-usability of participant, multiple sclerosis, Parkinson’s disease, epilepsy, previous stroke, self-reported dementia, intake of centrally active medication or a score of < 24 in the MMSE, see Supplementary Table 1). If participants lack information on these variables for one or both timepoints, we will not exclude the participant.
+Only participants with complete longitudinal WML data will be included. Further, participants for whom the Lesion Segmentation Toolbox did not run correctly or who were labeled to have poor scan quality or brain pathologies (LCL quality = 1 or 3 ) during quality control will be excluded from all analyses (H1 – H3 and exploratory analyses). 
+Timepoints with extreme outliers in TMT A (time to complete over 300 s) and B (time to complete over 300s) will not be considered in the analysis of executive function score (H2).
+Participants who miss WHR or DBP or have biologically implausible values (see below) at baseline and follow-up are excluded from the analysis. Otherwise, biologically implausible values in waist-to-hip ratio (<0.5 or >1.5) or blood pressure (DBP>140 mmHg and SBP<DBP) will be imputed (see below).
+
+### Missing data
+#### Dependent variables
+Only participants with complete and usable WML data at both time points will be investigated.
+If participants miss data on any of the cognitive tests (e.g. TMT, semantic or phonemic fluency, CERAD word list), we will construct the executive function and global composite score from the remaining tests.
+If participants do not have data on any test for executive function (i.e. no data on TMT, phonemic or semantic fluency) or global composite score (i.e. no cognitive data at all) for both timepoints, they will be excluded for the respective analyses. Otherwise, default listwise deletion of the respective time point will be performed in the mixed models. 
+
+#### Independent variables
+If participants are missing WHR or DBP at only one occasion, we will impute the missing value. If participants miss the measures or have biologically implausible values (see above) at both time points, they will be excluded from the analysis.
+
+#### Covariates 
+If participants are missing information on education (assessed only at baseline), hypertensive treatment, CES-D at one or both time points or TIV we will impute the missing values. 
+
+#### Imputation
+Multi-level Imputation will be performed with the R package mice 3.9.0 for education, TIV, DBP, WHR, CESD and hypertensive treatment (see prepare_data.R on github). The imputation will be based on all available cases after applying exclusion criteria and will be repeated 5 times with 10 iterations. 
+We will report the percentage of missing data for each of the variables. Imputation methods for education and TIV (2nd level variables) will be "2l.bin" and "2lonly.pmm", and for DBP, WHR, CESD and hypertensive treatment we will use “2l.pan”. See below for the variables used for the imputations.
+
+#### Power Calculation
+###### Power calculation for Model M1
+We performed a power calculation by simulating the effects of interest based on LIFE-Adult baseline data and previous studies. All code can be found on https://github.com/fBeyer89/VRF-and-progression-of-WML.
+
+We simulated individual data points based on three components: cross-sectional variation, longitudinal variation and error terms.
+We based the cross-sectional variation on the baseline associations of age, gender, systolic blood pressure (SBP), WHR with WML in LIFE-Adult participants over 50 years. We used systolic blood pressure but effects have been shown to be similar or more pronounced for DBP. First, we fitted the predictors to the baseline WML load using a log-linked GLM from the Gamma family. 
+
+The advantage of this approach is that we can use these coefficients to estimate WML load in its original unit (cm³) and thus combine cross-sectional effects with longitudinal effect sizes from the published literature. Then, we drew random samples from a multivariate normal distribution of age, gender, SBP, WHR and ICV with the same mean and covariance matrix as in the baseline data. Using the coefficients derived from the GLM and the simulated predictors, we calculated baseline estimates of WML in cm³ (see Figure 1).
+The longitudinal effect of elapsed time on WML was based on eight epidemiological and interventional studies in older adults (age > 60 years) (de Havenon et al., 2019; Dickie et al., 2016; Godin et al., 2011; Maillard et al.; Nasrallah et al., 2019; Peng et al., 2014; Scharf et al., 2019; Schmidt et al., 2005). The weighted average annual change in WML based on these studies was 0.64 cm³. As the prevalence of risk factors (hypertension, diabetes) and mean age varies across these studies, an average WML annual change of 0.64 cm³ is likely to overestimate the isolated effect of time on WML. Further, most studies reported the estimates in units of cm³ from linear models without considering the strongly skewed distribution of WML volume, and are thus biased. For a more conservative estimate, we based the individual change in WML from baseline to follow-up on a normal distribution with the mean at the half of the estimated WML annual change (0.32 cm³/y) and a relatively low standard deviation of 0.1 cm³, reflecting the fact that elapsed time is overall positively associated with the progression of WML. If values of age-related WML change below zero were drawn, they were set to 0.01. 
+
+The modifying effect of baseline SBP and change in SBP on age-related change in WML load was based on four epidemiological studies by (Dickie et al., 2016; Godin et al., 2011; Gottesman Rebecca et al., 2010; Verhaaren et al., 2013).
+For baseline SBP, the average modifying effect of 1 mmHg average SBP was 0.0052 cm³/y. We used a standard deviation of 0.001 cm³/y to draw change estimates due to baseline SBP from a normal distribution. 
+The effect of change in SBP could be drawn from only one study (Godin et al., 2011) and was 0.0025 cm³/y per mmHg. Again, we used a normal distribution with a standard deviation of 0.001 cm³/y.
+Previous longitudinal studies did not investigate baseline WHR as a predictor of WML progression. Studies on BMI either reported no effect (Dearborn et al., 2015; Scharf et al., 2019) or did not show quantitative effect sizes (Gustafson et al., 2004; Vuorinen et al., 2011). Yet, cross-sectional studies indicate that WHR is associated with WML, predominantly in deep WM (Alqarni et al., 2020; Griffanti et al., 2018; Higuchi et al., 2017; Kim et al., 2017; Lampe et al., 2019; Morys et al., 2021; Veldsman et al., 2020). Thus, while there is little longitudinal data to rely on, based on cross-sectional reports we expect a smaller effect size for WHR compared to blood pressure.
+We obtain an exploratory estimate of the effect size by comparing the baseline association in the LIFE-Adult cohort of SBP and WHR with asinh-transformed WML volume.
+Here, the coefficients are 0.84 (asinh(cm³))/WHR unit and 0.0083 (asinh(cm³)/mmHg) for WHR and SBP, respectively. We use the approximation that the interaction effect of WHR on age change would be similar to the interaction effect of SBP (0.0052 cm³/y), scaled by their ratio, leading to an interaction effect of WHR of 0.0052cm³/y/mmHg * 0.84/0.0083 = 0.53 cm³/y.
+This approach is not ideal as it combines effect sizes from the literature referring to raw WML units (cm³) with relationship of effects on log-scaled data. Yet, it is the best we can do given the lack of appropriate data on the expected effect size. 
+In our simulations, we will thus estimate the power for a range of scales of this exploratory effect size (0.5, 1, 1.5 times 0.53 cm³/y). We will use the same values for the effect of change in WHR.
+Change in SBP and WHR from baseline to follow-up were based on published results in epidemiological studies of aging (Baltimore Longitudinal Study of Aging (BLSA) and Whitehall II). Average time between both assessments in LIFE-Adult was 6.7 years. 
+We estimated the average change in SBP to be: 0.76 mmHg/y (averaged over BLSA: 8.5 mmHg/decade for men, 4.4. mmHg/decade for women at age 60 and Whitehall 2: 1 mmHg/y for older men/women (60 - 70 years) (Dearborn et al., 2015; Wills et al., 2011). We thus drew the change in SBP from a normal distribution with a mean of 0.76 mmHg/y * 6.76y = 5.13 mmHg and arbitrary, yet relatively high standard deviation of 4 mmHg. 
+For WHR, (Shimokata et al., 1989) reported an increase of WHR of 0.0073 in men, 0.0021 in women over 5 years. Thus, WHR change was taken from a normal distribution with a mean of 0.0047/5 *6 0.0056 and a similarly high standard deviation of 0.005.
+For the error terms, we used a subject random effect with a mean of zero and a standard deviation of 0.5 cm³, while for the random error we used a normal distribution around zero with 1cm³ standard deviation. 
+Finally, all effects were added according to 
+WML=
+ exp(age_sim*coeff_age + ….) (cross-sectional effects from Gamma-loglink GLM)
++(effect_age_change+((effect_SBP_baseline*SBP_baseline)+(effect_WHR_baseline*WHR_baseline)*age_change)( effects of elapsed time/change in age, modified by baseline SBP and WHR )
++ WHR_change*effect_WHR_change + SBP_change*effect_SBP_change ( effects of change in SBP and WHR)
++ random_effect + residual_error (residual error and random effects)
+
+Then, we repeated the simulation 50 times for four sample sizes (N=400,600,800,1000) and for three scaling factors of WHR effects (0.5, 1, 1.5).
+We used the asinh-transform and fitted the linear mixed model M1. We extracted p-values for the interaction effects of SBP baseline, and WHR baseline on the age change effect, as well as the effects of SBP and WHR change, and considered p<0.033 as significant. Then, we derived the power by calculating the number of rejected null hypotheses compared to the total number of tests. If the average effect size across simulations was not in the expected direction (positive for all four predictors), we assigned a power of 0.
+We also extracted the average Bayes Factor and one-sided Bayes Factor (based on 10 Markov chains to calculate proportion of posterior estimates in the hypothesized direction).
+
+We thus conclude that after applying exclusion criteria to our sample of N ~ 1000 individuals, we will able to detect the interaction of SBP with age change with a power > 0.9 and a Bayes factor > 10. We are not sufficiently powered to detect the hypothesized effect size of baseline WHR on WML progression. We thus report these results in the exploratory analysis section. Similarly, we are not sufficiently powered to detect effects of change in SBP and WHR on WML progression and will also report these results in the exploratory analysis section. 
+
+#### Power calculation for Model M2 and M3
+A negative effect of WML progression on executive and global cognitive function is well established in non-clinical populations (Debette et al., 2019; Hamilton, Backhouse, et al., 2021; Kloppenborg et al., 2014).
+Unfortunately, effect sizes for WML progression have rarely been reported in quantitative units but have been calculated for semi-quantitative ratings or dichotomized quantitative outcomes. 
+Thus, we base the following power analysis on a recent investigation in 540 members of the Lothian Birth cohort (average age: 72.6 years) over nine years (Hamilton, Cox, et al., 2021).
+Here, the ratio of WML load normalized by TIV predicted a decline in global cognitive function (standardized β = −0.149 ) and processing speed (standardized β = −0.176).
+As our cohort is younger on average than the Lothian Birth cohort, we expect the effect size to be smaller, yet still reliable. Using the “pwr” package in R, we estimate a minimum number of 850 participants to detect a small negative effect of WML volume on cognitive function (standardized β = −0.1; pwr.r.test(r=-0.1, sig.level=0.05, power=0.9, alternative="less")) and a minimum number of 590 participants for a slightly larger effect (standardized β = −0.12; pwr.r.test(r=-0.1, sig.level=0.05, power=0.9, alternative="less")).
+Our power should thus be sufficient to detect the effect on global and executive cognitive function in our cohort. 
+
+
+## Statistical Analysis
+### Confirmatory Analyses
+Statistical analyses scripts can be inspected on https://github.com/fBeyer89/VRF-and-progression-of-WML.
+All statistical analysis with WML volume or executive function as dependent variable will be performed in R version 3.6.1. We will use linear mixed models implemented in lmerMod (lmerTest) and BayesFactor version 0.9.12-4.2 (generalTestBF) with subject as a random intercept (see function run_LME_realdata.R on github).
+More specifically, we will test 3 models for our four hypotheses (see Table 2).
+
+M1: asinh(WML) ~ Age_baseline + Age_change + DBP_baseline  + DBP_baseline:Age_change + DBP_change + WHR_baseline + WHR_baseline:Age_change + WHR_change + gender + HT_medication + TIV + (1|subj)
+
+M2: 
+Z_Exec ~ Age_baseline + Age_change + asinh(WML)_baseline + Age_change :asinh(WML)_baseline + WML_change + gender + education + CES_D
+
+M3:
+Z_global_cog ~ Age_baseline + Age_change + asinh(WML)_baseline + Age_change :asinh(WML)_baseline + WML_change + gender + education + CES_D
+
+Explanation of covariates (M1)
+Age_baseline: effect of age at baseline 
+Age_change: effect of passed time between baseline and follow-up (progression)
+DBP_baseline: effect of baseline DBP
+DBP_baseline: modifying effect of baseline DBP on progression of WML between baseline and follow-up (effect of interest for H1)
+DBP_change: effect of change in DBP between baseline and follow-up on WML progression (effect of interest for E1c)
+WHR_baseline effect of baseline WHR
+WHR_baseline:Age_change: modifying effect of baseline WHR on progression of WML between baseline and follow-up (effect of interest for E1a)
+WHR_change: effect of change in WHR between baseline and follow-up on WML progression (effect of interest for E1b)
+Gender: adjust for gender (no power analyses possible for gender/sex interaction, therefore we control for it in confirmatory analyses)
+HT_medication: adjust for hypertension medication as this probably influences the effect of DBP on WML progression
+TIV: total intracranial volume, trivially linked with WML volume
+
+Explanation of covariates (M2 & M3)
+Age_baseline: effect of age at baseline 
+Age_change: effect of passed time between baseline and follow-up (progression)
+asinh(WML)_baseline: effect of baseline WML volume
+Age_change :asinh(WML)_baseline: modifying effect of baseline WML load on cognitive function changes between baseline and follow-up
+WML_change: effect of interest M2/M3: effect of WML progression on cognitive function changes 
+Gender: adjust for gender (no power analyses possible for gender/sex interaction, therefore we control for it in confirmatory analyses)
+Education: adjust for education level as it probably influences overall cognitive performance
+CES-D: adjust for depressive symptoms as they influence overall cognitive performance
+
+### Inference criteria
+We will base our inference on frequentist and Bayesian full null model comparison. 
+For frequentist statistics, we will use ‘drop1’ function in R with Satterthwaite's method to determine statistical significance of the predictors of interest, e.g. DBP_baseline:Age_change for H1, WML_change for H2 and H3 (see Table 2). We will pool the results from the analyses of multiple imputed datasets by Rubin's rules as implemented in mice’s function pool.
+As we have directed hypotheses, we will use one-sided p-values (αTwoSided = 2 * αOneSided). We will Bonferroni-adjust for 3 tested hypotheses by dividing the alpha-level of 0.05 by 3 (αOneSided < 0.05/3). Practically, we will use αTwoSided =2* αOneSided /3 = 0.033 as threshold on the two-sided p-values we receive from the full-null model comparison with drop1. 
+To obtain Bayes Factors, we will fit ‘generalTestBF’ with the options “whichModels="top", multicore = T, neverExclude = c("age_base", "^age_change$", "^DBP_base$", "^WHR_base$", "gender", "icv", "id"),” to the data. Subject is defined as a random effect and we will use the software’s default priors (i.e. JZS prior with a Cauchy prior on effect size and the Jeffreys prior on variance). We will extract Bayes Factors for the full model compared to models omitting the independent variables of interest. We will calculate one-sided Bayes factors by drawing from the posterior distribution 10 times and calculating the probability of finding the effect in the expected direction. Then, we will multiply the two-sided Bayes factor with this probability divided by 0.5 which represents equal likelihood of both directions (see https://gist.github.com/richarddmorey/7c1bd06a14384412f2145daee315c036 for an example). We will pool the Bayes factors by calculating the average and report the range of obtained Bayes factors from the five imputed datasets.
+We will interpret a Bayes Factor between 3 and 6 as moderate evidence, and a Bayes factor between 6 and 10 as positive evidence and above 10 as strong evidence in favor of the predictor. A Bayes Factor between 1/3 and 3 is deemed indecisive and a Bayes Factor smaller than 1/3 and 1/6 as moderate/strong evidence in favor of the null hypothesis. Bayes Factors will not be corrected for multiple comparisons as they inherently provide a lower false positive rate. 
+Taken together, we will reject the null hypothesis if p<0.033 and BF>3. We will accept the null hypothesis if p>0.033 and BF < 1/3 (see Table 2). 
+
+### Transformations & Checking of Assumptions
+All assumptions for LME will be checked separately for the five imputed datasets (function test_LME_assumptions.R on github). 
+#### Normality and homoscedasticity of residuals
+We will inspect the normality and homoscedasticity of residuals using qq-plots and plots of fitted vs. residual values. Given the known skewness of WML volumes, we will transform this measure using asinh-transformation as described above. The advantage of this transform is that it is also valid for zeros. 
+We will perform asinh transformation of CESD for M2 and M3.
+If for M1, the residuals are not normally distributed for all five imputed datasets, we will implement a generalized linear mixed model, using a Gamma error function and log link function instead of a linear mixed model. Here, we will use the raw WML volumes as outcome. Alternatively, and for easier interpretation of effect sizes, we may fit a robustLMM on the untransformed WML data as in (Nasrallah et al., 2019).
+#### Normality of random effects
+We visually inspect the required normal distribution of the random effects.
+#### Influential cases
+We will use the function ‘influence’ from the influence.ME package to assess influential cases. We will plot Cook’s distance for each model, and define outliers as those cases with Cook’s distance > μ + 3 σ. We will re-calculate all models without influential cases, and report Bonferroni-corrected p-values of these models if they lead to a different conclusion than the original models for any of the imputations. 
+#### Model stability
+We will test the stability of the linear mixed model with the command “glmm.model.stab” based on code written by Roger Mundry (https://github.com/keyfm/eva/blob/master/trpm8/src/glmm_stability.r.). This function derives coefficients and their standard errors for all predictors while excluding levels of the random effects one at a time. If the function returns convergence issues, we will try to fix them by introducing a control object. Further, we will inspect the summarized range of estimated coefficients and evaluate whether they differ substantially from the original coefficients. 
+#### Variance inflation
+We will calculate variance inflation with the function ‘vif’ from the car package omitting the random effect and interaction terms from the mixed models M1 - M4. A VIF above 10 will be considered problematic and lead to the inspection of a correlogram of all variables in the model. If two variables of interest are highly collinear, we will calculate the residualized version of each of the predictors to infer its independent effect. If two control variables are highly collinear, we will ignore their covariance.
+
+### Exploratory Analyses 
+E1: Effects of baseline WHR and change in risk factors on WML progression 
+Our power analysis revealed low power to detect the hypothesized effect size for the association with baseline WHR as well as change in blood pressure and WHR on WML. There is very little data from longitudinal studies and our estimate was based on scaling of cross-sectional associations which might be biased and error-prone. We therefore test these effects in exploratory analyses:
+E1a: Higher WHR at baseline predicts stronger increase of WML volume at follow-up.
+E1b: Higher change in WHR predicts stronger increase of WML volume at follow-up.
+E1c: Higher change in DBP predicts stronger increase of WML volume at follow-up.
+We will use the statistical model M1 
+M1: asinh(WML) ~ Age_baseline + Age_change + DBP_baseline  + DBP_baseline:Age_change + DBP_change + WHR_baseline + WHR_baseline:Age_change + WHR_change + Gender + HT_medication + TIV + (1|subj)
+and report the effect size, p-value and one-sided Bayes factor for the interaction term of baseline WHR and age change, DBP change and WHR change. 
+
+### E2: Gender-specific effects in WML progression
+We did not perform power analyses for these hypotheses (E2a - E2c) due to missing reference values in the literature. Therefore, we will explore whether WML progression is more pronounced in women (E2a).
+We will use a modified version of statistical model M1 
+M1E2a: asinh(WML) ~ Age_baseline + Age_change + Gender + Gender:Age_change + DBP_baseline  + DBP_baseline:Age_change + DBP_change + WHR_baseline + WHR_baseline:Age_change + WHR_change + HT_medication + TIV + (1|subj)
+and report the effect size, p-value and one-sided Bayes factor for the interaction term of gender and age change. We expect a positive coefficient for women.
+
+We will also explore whether there is an interactive effect of gender and DBP on WML progression, where in women DBP has a stronger effect than in men (E2b).
+We will use a modified version of statistical model M1 
+M1E2b: asinh(WML) ~ Age_baseline + Age_change + Gender + Gender:Age_change + Gender:DBP_baseline + Gender:Age_change:DBP_baseline  + DBP_baseline:Age_change + DBP_change + WHR_baseline + WHR_baseline:Age_change + WHR_change + HT_medication + TIV + (1|subj)
+and report the effect size, p-value and one-sided Bayes factor for the three-way interaction term of gender, age change and DBP_baseline. We expect a positive coefficient for women.
+
+We will test whether there is an interactive effect of gender and WHR on WML progression, where in women WHR has a stronger effect than in men (E2c). 
+M1E2c: asinh(WML) ~ Age_baseline + Age_change + Gender + Gender:Age_change + Gender:WHR_baseline + Gender:Age_change:WHR_baseline  + DBP_baseline:Age_change + DBP_change + WHR_baseline + WHR_baseline:Age_change + WHR_change + HT_medication + TIV + (1|subj)
+and report the effect size, p-value and one-sided Bayes factor for the three-way interaction term of gender, age change and WHR_baseline. We expect a positive coefficient for women.
+
+### E3: Gender-specific effects of WML progression on cognitive function
+Regarding cognitive function we will explore if there is an interactive effect of gender and WML progression on executive cognitive function where in women WML progression is associated with less decline in executive cognitive function (E3a).
+We will use a modified model of M2
+Z_exec ~ asinh(WML)_baseline + WML_change + Gender:WML_change + Age_baseline + Age_change :asinh(WML)_baseline + Age_change +  Gender + education + CESD + (1|subj)
+and report the effect size, p-value and one-sided Bayes factor for the interaction term of gender and WML change. We expect a positive coefficient for women.
+
+Finally, we will test if there is an interactive effect of gender and WML progression on global cognitive function where in women WML progression is associated with less decline in global cognitive function (E3b). 
+We will use a modified model of M3
+Z_globalcog ~ asinh(WML)_baseline + WML_change + Gender:WML_change + Age_baseline + Age_change :asinh(WML)_baseline+ Age_change +  Gender + education + CESD + (1|subj)
+and report the effect size, p-value and one-sided Bayes factor for the interaction term of gender and WML change. We expect a positive coefficient for women.
+
+### Whole-brain analysis of new lesion locations
+Statistical analysis on WML probability maps will be performed using the R package ‘neuropointilist’ which allows to apply LMM to whole-brain data.
+In whole-brain analysis, we will test whether DBP baseline and WHR baseline differentially predict the lesion location of new WML. 
+First, we will use a whole-brain LMM to determine all voxels in which new lesions are significantly related to baseline DBP or WHR. 
+As the outcome lesion probability is binary, we will use the following model formula for generalized LMM with a log link function:
+E1: Presence(new WML) ~ Age_baseline + Age_change + Gender +  DBP_baseline + DBP_change +  HT_medication +  WHR_baseline + WHR_change+ HT_medication 
+
+P-values derived from the voxelwise LMM will be FDR-corrected and all voxels with p FDR < 0.05 will be deemed significant.
+Thresholding the maps at p<0.05 for each VRF, we will calculate the volume of periventricular/deep WM lesions associated with baseline DBP and WHR. To differentiate lesion location, we will use a mask in MNI space which indicates 10 mm distance to the ventricles according to (Griffanti et al., 2018).
+Then, we will test the interaction of lesion location and risk factor on new WML volume. Here, we hypothesize that DBP is associated with new lesions in periventricular WM while WHR is predominantly associated with new WML in deep WM. 
+E2.1: New WML volume ~ risk factor* location
+
+Alternatively, we will test whether the ratio of deep to periventricular WML volume depends on the investigated risk factor.
+E2.2: New deep WML/periventricular WML ~ risk factor 
+
+### Mediation between VRF, WML and cognition
+We may explore the mediating effect of new WML on the relationship of VRF and cognitive function in separate two-level mediation models. 
+
+
+
+## Results
+
+### Flowchart
+After applying exclusion criteria, the sample included 596 individuals with two timepoints (see Table \ref{tab:flowchart} for details on the exclusion).
+```{r tab:flowchart}
+all=read.csv("/data/pt_life_whm/Results/Tables/crossvols_thr0.1_w_pseudonym_qa.csv")
+all_wMRI_fu=nrow(all[all$MR_y_n_fu==1,])
+missing_baseline_MRI=8 #table(all$LPA_bl_done)
+missing_fu=2 #table(all$LPA_fu_done)
+procissue=1
+all_LST=all_wMRI_fu-missing_baseline_MRI-missing_fu-procissue
+Nexcl=read.csv("N_excludedSubjects.csv")
+all_wneuro=all_LST-Nexcl$excl_neurology
+all_wdement=all_LST-Nexcl$excl_neurology-Nexcl$excl_dement
+all_wradio=all_LST-Nexcl$excl_neurology-Nexcl$excl_dement-Nexcl$excl_radio
+all_wmed=all_LST-Nexcl$excl_neurology-Nexcl$excl_dement-Nexcl$excl_radio-Nexcl$excl_medcentral
+all_wage=all_LST-Nexcl$excl_neurology-Nexcl$excl_dement-Nexcl$excl_radio-Nexcl$excl_medcentral-Nexcl$excl_age
+
+grViz("digraph flowchart {
+node [shape = rectangle, width = 8, fillcolor = Antiquewhite, style = filled, fontsize = 30]
+
+a [label = '@@1', width = 8, height = 1.25]
+b [label = '@@2']
+c [label = '@@3']
+d [label = '@@4']
+e [label = '@@5']
+f [label = '@@6']
+g [label = '@@7']
+''
+
+a -> b -> c -> d -> e -> f -> g
+
+
+}
+[1]: paste(paste0('All participants with MRI at follow-up (n = ', all_wMRI_fu, ')'), sep = '\\n')
+[2]: paste(paste0('Participants with WML segmentation at baseline and followup (n = ', all_LST, ')'), sep = '\\n')
+[3]: paste(paste0('Participants without neurological disease (MS, epilepsy, Parkinsons disease,stroke) (n = ', all_wneuro, ')'), sep = '\\n')
+[4]: paste(paste0('Participants without dementia or MMSE < 24 (n = ', all_wdement, ')'), sep = '\\n')
+[5]: paste(paste0('Participants without radiological findings (n = ', all_wradio, ')'), sep = '\\n')
+[6]: paste(paste0('Participants without intake of centrally active medication (n = ', all_wmed, ')'), sep = '\\n')
+[7]: paste(paste0('Participants from 45 to 85 years (n = ', all_wage, ')'), sep = '\\n')")
+
+```
+### Confirmatory analyses
+
+#### H1: baseline DBP and WML progression
+In model M1 we tested whether higher baseline DBP was associated with stronger WML progression. 
+```{r tabM1_CRV_freq, eval=FALSE}
+res=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/M1_VRF_model_res_freq.csv")
+res_table=
+res %>%
+#   mutate(
+#     adj.p = cell_spec(adj.p, "latex", bold = ifelse(adj.p < 0.05, T, F))
+#   )  %>%
+  #select(p_adjust) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+res_table
+```
+
+```{r forestM1_CRV_freq, echo=FALSE}
+model="M1_VRF"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Sex (males=1)",
+        "BPmed1" = "Intake of BP medication",
+        "TIV" = "Total intracranial volume",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,"M1_VRF.html"))
+```
+
+```{r plotM1_CRV_freq, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') + theme_bw(base_size=13)
+ggsave(paste0(wd, "Model1_VRF_forest.jpeg"))
+```
+
+```{r plotM1_CRV_freq, echo=FALSE}
+p1<-comp_plot("M1_VRF","DBP_base")
+p2<-comp_plot("M1_VRF","DBP_change")
+p3<-comp_plot("M1_VRF","WHR_base")
+p4<-comp_plot("M1_VRF","WHR_change")
+plots <- plot_grid(p1, p2, p3, p4, ncol = 2, nrow = 2) 
+ggsave(paste0(wd, "Model1_VRF_scatter.jpeg"),width=12, height=5)
+```
+
+#### H2: Higher WML progression is associated with stronger decline in executive function 
+With Model 2 we investigated the association of higher WML progression and executive function. 
+```{r tabM2_exec, eval=FALSE}
+res=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/M2_exfunct_model_res_freq.csv")
+res_table=
+res %>%
+#   mutate(
+#     adj.p = cell_spec(adj.p, "latex", bold = ifelse(adj.p < 0.05, T, F))
+#   )  %>%
+  #select(p_adjust) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+res_table
+```
+
+```{r forestM2_exfunct_freq, echo=FALSE}
+model="M2_exfunct"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "asinh_wml_base" = "Asinh-transformed WML volume baseline",
+        "asinh_wml_change" = "Change in Asinh-transformed WML volume",
+        "sex" = "Sex (males=1)",
+        "education1" = "Higher education (y/n)",
+        "cesd" = "CES-D depression score",
+        "TIV" = "Total intracranial volume",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+```{r plotM2_exfunct_freq, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, "Model2_exfunc_forest.jpeg"))
+```
+
+```{r tabM2_exec_bf, echo=FALSE}
+res=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/M2_exfunct_model_res_bayes.csv")
+res_table=
+res %>%
+#   mutate(
+#     adj.p = cell_spec(adj.p, "latex", bold = ifelse(adj.p < 0.05, T, F))
+#   )  %>%
+  #select(p_adjust) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+res_table
+```
+
+```{r plotM2_exfunct_freq, echo=FALSE}
+p2<-comp_plot("M2_exfunct","asinh_wml_change")
+p1<-comp_plot("M2_exfunct","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "Model2_exfunct_scatter.jpeg"))
+```
+#### H3: Higher WML progression is associated with stronger decline in global cognitive function 
+With Model 3 we investigated the association of higher WML progression and global cognitive function. 
+
+```{r tabM3_globalcog_freq, eval=FALSE}
+res=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/M2_exfunct_model_res_freq.csv")
+res_table=
+res %>%
+#   mutate(
+#     adj.p = cell_spec(adj.p, "latex", bold = ifelse(adj.p < 0.05, T, F))
+#   )  %>%
+  #select(p_adjust) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+res_table
+```
+
+```{r tabM3_globalcog_bf, eval=FALSE}
+res=read.csv("/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/M2_exfunct_model_res_bayes.csv")
+res_table=
+res %>%
+#   mutate(
+#     adj.p = cell_spec(adj.p, "latex", bold = ifelse(adj.p < 0.05, T, F))
+#   )  %>%
+  #select(p_adjust) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+res_table
+```
+
+```{r forestM3_globalcog_freq, echo=FALSE}
+model="M3_globalcog"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Conf/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "asinh_wml_base" = "Asinh-transformed WML volume baseline",
+        "asinh_wml_change" = "Change in Asinh-transformed WML volume",
+        "sex" = "Sex (males=1)",
+        "education1" = "Higher education (y/n)",
+        "cesd" = "CES-D depression score",
+        "TIV" = "Total intracranial volume",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+```{r plotM2_exfunct_freq, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, "M3_globalcog_forest.jpeg"))
+```
+```{r plotM3_globalcog, echo=FALSE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M3_globalcog_scatter.jpeg"), width = 12, height=5)
+```
+For all models: 
+assumptions: 
+exclusion of influential cases:
+
+### Exploratory Analyses
+#### E1a: Higher WHR at baseline predicts stronger increase of WML volume at follow-up.
+We used model 1 to also perform exploratory analyses regarding baseline WHR and change in WHR and DBP on WML progression.
+#### E1b: Higher change in WHR predicts stronger increase of WML volume at follow-up.
+#### E1c: Higher change in DBP predicts stronger increase of WML volume at follow-up.
+
+#### E2a: WML progression is more pronounced in women.
+```{r tableE2a_sex, echo=FALSE}
+model="E2a_sex"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Sex (males=1)",
+        "BPmed1" = "Intake of BP medication",
+        "TIV" = "Total intracranial volume",
+        "age_change:sex" = "Interaction of time and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+```{r M2a_sex_forestplot, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, "M2a_sex_forest.jpeg"))
+```
+```{r M2a_sex_scatterplot, eval=FALSE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.jpeg"), width = 12, height=5)
+```
+#### E2aa: There is an interactive effect of gender and DBP change on WML progression, where in women DBP has a stronger effect than in men.
+```{r tableE2aa_DBP_change_sex, echo=FALSE}
+model="E2aa_sex_DBP_change"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Sex (males=1)",
+        "BPmed1" = "Intake of BP medication",
+        "TIV" = "Total intracranial volume",
+        "DBP_change:sex" = "Interaction of DBP change and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+```{r E2aa_sex_DBP_change_forestplot, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, model, "_forest.jpeg"))
+```
+```{r E2aa_sex_DBP_change_scatterplot, eval=FALSE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.jpeg"), width = 12, height=5)
+```
+#### E2a: There is an interactive effect of gender and DBP on WML progression, where in women DBP has a stronger effect than in men.
+```{r tableE2b_DBP_sex, echo=FALSE}
+model="E2b_DBP"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Sex (males=1)",
+        "BPmed1" = "Intake of BP medication",
+        "TIV" = "Total intracranial volume",
+        "sex:DBP_base" = "Interaction of DBP and gender",
+        "age_change:sex" = "Interaction of time and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        "age_change:sex:DBP_base" = "Interaction of DBP at baseline with gender-specific change",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+```{r E2b_DBP_sex_forestplot, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, model, "_forest.jpeg"))
+```
+```{r E2b_DBP_sex_scatterplot, eval=FALSE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.jpeg"), width = 12, height=5)
+```
+
+####  E2c: There is an interactive effect of gender and WHR on WML progression, where in women WHR has a stronger effect than in men. 
+```{r tableE2c_WHR_sex, echo=FALSE}
+model="E2c_WHR"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Sex (males=1)",
+        "BPmed1" = "Intake of BP medication",
+        "TIV" = "Total intracranial volume",
+        "sex:WHR_base" = "Interaction of WHR and gender",
+        "age_change:sex" = "Interaction of time and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        "age_change:sex:WHR_base" = "Interaction of WHR at baseline with gender-specific change",
+        '(Intercept)' = 'Constant')
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+```{r E2b_DBP_sex_forestplot, echo=FALSE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, model, "_forest.jpeg"))
+```
+```{r E2b_DBP_sex_scatterplot, eval=FALSE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.jpeg"), width = 12, height=5)
+```
+#### E3a: There is an interactive effect of gender and WML progression on executive cognitive function where in women WML progression is associated with less decline in executive cognitive function.
+```{r tableE3a_exfunct_sex, echo=FALSE}
+model="E3a_exfunct"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "asinh_wml_base" = "Asinh-transformed WML volume baseline",
+        "asinh_wml_change" = "Change in Asinh-transformed WML volume",
+        "sex" = "Sex (males=1)",
+        "education1" = "Higher education (y/n)",
+        "cesd" = "CES-D depression score",
+        "TIV" = "Total intracranial volume",
+        '(Intercept)' = 'Constant',
+        "asinh_wml_change:sex" = "Interaction of gender and Asinh-transformed WML change")
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+#### E3b: There is an interactive effect of gender and WML progression on global cognitive function where in women WML progression is associated with less decline in global cognitive function. 
+```{r tableE3a_exfunct_sex, echo=FALSE}
+model="E3b_globalcog"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "asinh_wml_base" = "Asinh-transformed WML volume baseline",
+        "asinh_wml_change" = "Change in Asinh-transformed WML volume",
+        "sex" = "Sex (males=1)",
+        "education1" = "Higher education (y/n)",
+        "cesd" = "CES-D depression score",
+        "TIV" = "Total intracranial volume",
+        '(Intercept)' = 'Constant',
+        "asinh_wml_change:sex" = "Interaction of gender and Asinh-transformed WML change")
+modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = paste0(wd,model,".html"))
+```
+
+## Some sensitivity analyses
+### Plot change in DBP, WHR, WML and cognition
+
+#for testing: load smaller dataset:
+```{r check imputations of DBP and WHR}
+library(mice)
+miceadds::load.Rdata(objname = "imp", "/data/pt_life_whm/Results/Tables/imputed_data_08.5.23/imputed_data_08.5.23.Rdata")
+md.pattern(imp$data,rotate.names = T)
+dat=imp$data
+nrow(dat[is.na(dat$DBP),]) #10 time points missing DBP
+nrow(dat[is.na(dat$WHR),]) #4 time points missing WHR
+test=comp_imp[comp_imp$.imp==1,]
+
+imp_cases=subset(test, subj %in% dat[is.na(dat$DBP),"subj"])
+#imputation worked properly (producing different values for each time point)
+ggplot(data=imp_cases, aes(x = time, y = DBP, group = subj)) + geom_point() + geom_line()
+
+#five imputed datapoints are shown
+ggmice(data = imp, aes(x = age, y = DBP, group = subj, shape=time)) + geom_point() + geom_line()
+
+```
+```{r calculate trends}
+dat <- dat %>%
+  group_by(subj) %>%
+  mutate(
+    trend_asinh_wml = ifelse(time == "bl" & lead(asinh_wml) >  asinh_wml, "increase", "decrease"),
+    trend_asinh_wml = ifelse(time == "bl" & lead(asinh_wml) ==  asinh_wml, "unchanged", trend_asinh_wml),
+    trend_asinh_wml = ifelse(time == "fu", lag(trend_asinh_wml), trend_asinh_wml)
+  )%>%
+  mutate(
+    trend_DBP = ifelse(time == "bl" & lead(DBP) >  DBP, "increase", "decrease"),
+    trend_DBP = ifelse(time == "bl" & lead(DBP) ==  DBP, "unchanged", trend_DBP),
+    trend_DBP = ifelse(time == "fu", lag(trend_DBP), trend_DBP)
+  )%>%
+  mutate(
+    trend_WHR = ifelse(time == "bl" & lead(WHR) >  WHR, "increase", "decrease"),
+    trend_WHR = ifelse(time == "bl" & lead(WHR) ==  WHR, "unchanged", trend_WHR),
+    trend_WHR = ifelse(time == "fu", lag(trend_WHR), trend_WHR)
+  )
+
+dat= dat%>%
+  mutate(
+    BPmed_change = case_when(time == "bl" & BPmed==0 & lead(BPmed)==0 ~ "no treatment", 
+                             time == "bl" & BPmed==0 & is.na(lead(BPmed)) ~ "no treatment at baseline, fu unknown", time == "bl" & is.na(BPmed) & lead(BPmed)==1 ~ "unknown at baseline, treatment at fu",
+                             time == "bl" & BPmed==0 & lead(BPmed)==1 ~  "start treatment",
+                             time == "bl" & BPmed==1 & lead(BPmed)==0 ~  "revoke treatment",
+                             
+                             time == "bl" & BPmed==1 & lead(BPmed)==1 ~  "all treatment",
+                             time == "fu" ~ lag(BPmed_change)))
+                             
+
+```
+```{r plot trends}
+ggplot(data = dat, aes(x = age, y=DBP, group=subj, color=trend_DBP)) + geom_point() + geom_line()
+
+ggplot(data = dat[dat$BPmed_change=="start treatment",], aes(x = age, y=DBP, group=subj, color=BPmed_change)) + geom_point() + geom_line()
+
+ggplot(data = dat, aes(x = age, y=WHR, group=subj, color=trend_WHR)) + geom_point() + geom_line()
+
+ggplot(data = dat, aes(x = age, y=asinh_wml, group=subj, color=trend_asinh_wml)) + geom_point() + geom_line()
+
+```
+
+```{r DBP change outliers}
+subjs=dat[dat$DBP_change<(-20)&!is.na(dat$DBP_change),"subj"]
+dat[dat$subj==subjs$subj[3], c("subj", "time", "DBP", "BPmed")]
+
+dat_DBPdrop
+dat[dat$subj==590, c("subj", "time", "DBP_change", "BPmed")]
+ggplot(data = dat, aes(x = age, y=DBP, group=subj, color=BPmed)) + geom_point() + geom_line()
+
+```

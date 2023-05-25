@@ -1,0 +1,142 @@
+Logfile for bbregister
+Mon 15 May 2023 05:29:12 PM CEST
+
+setenv SUBJECTS_DIR /data/pt_life_freesurfer/freesurfer_all
+cd /data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/code_to_execute_separately
+/afs/cbs.mpg.de/software/freesurfer/7.3.2/debian-bullseye-amd64/bin/bbregister --t2 --init-fsl --fslmat flair2anat.mat --reg flair2anat.dat --o flair2anat_bbreg.nii.gz --mov /data/pt_life_whm/Data/LST/sub-03D6100B71/mFLAIR_bl.nii.gz --s 03D6100B71
+
+bbregister 7.3.2
+Linux comps09h06 5.10.0-22-amd64 #1 SMP Debian 5.10.178-3 (2023-04-22) x86_64 GNU/Linux
+FREESURFER_HOME /afs/cbs.mpg.de/software/freesurfer/7.3.2/debian-bullseye-amd64
+mri_convert /data/pt_life_whm/Data/LST/sub-03D6100B71/mFLAIR_bl.nii.gz ./tmp.bbregister.123517/template.nii
+mri_convert /data/pt_life_whm/Data/LST/sub-03D6100B71/mFLAIR_bl.nii.gz ./tmp.bbregister.123517/template.nii 
+reading from /data/pt_life_whm/Data/LST/sub-03D6100B71/mFLAIR_bl.nii.gz...
+TR=0.00, TE=0.00, TI=0.00, flip angle=0.00
+i_ras = (0.998672, 0.024407, -0.0453629)
+j_ras = (-0.0244321, 0.999701, 0)
+k_ras = (0.0453495, 0.00110828, 0.998971)
+writing to ./tmp.bbregister.123517/template.nii...
+fslregister --s 03D6100B71 --mov ./tmp.bbregister.123517/template.nii --reg ./tmp.bbregister.123517/reg.init.dat --niters 1 --maxangle 90 --tmp ./tmp.bbregister.123517/fslregister --dof 6 --fsvol brainmask.mgz --nobetmov
+
+Log file is ./tmp.bbregister.123517/reg.init.dat.fslregister.log
+
+Mon 15 May 2023 05:29:24 PM CEST
+--s 03D6100B71 --mov ./tmp.bbregister.123517/template.nii --reg ./tmp.bbregister.123517/reg.init.dat --niters 1 --maxangle 90 --tmp ./tmp.bbregister.123517/fslregister --dof 6 --fsvol brainmask.mgz --nobetmov
+fslregister 7.3.2
+comps09h06
+Linux comps09h06 5.10.0-22-amd64 #1 SMP Debian 5.10.178-3 (2023-04-22) x86_64 GNU/Linux
+nIters 1
+--------------------------------------
+/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/code_to_execute_separately
+mri_convert /data/pt_life_freesurfer/freesurfer_all/03D6100B71/mri/brainmask.mgz ./tmp.bbregister.123517/fslregister/refvol.fslregister.nii
+mri_convert /data/pt_life_freesurfer/freesurfer_all/03D6100B71/mri/brainmask.mgz ./tmp.bbregister.123517/fslregister/refvol.fslregister.nii 
+reading from /data/pt_life_freesurfer/freesurfer_all/03D6100B71/mri/brainmask.mgz...
+TR=0.00, TE=0.00, TI=0.00, flip angle=0.00
+i_ras = (-1, 0, 0)
+j_ras = (0, 0, -1)
+k_ras = (0, 1, 0)
+writing to ./tmp.bbregister.123517/fslregister/refvol.fslregister.nii...
+--------------------------------------
+/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/code_to_execute_separately
+mri_convert ./tmp.bbregister.123517/template.nii ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii --frame 0
+mri_convert ./tmp.bbregister.123517/template.nii ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii --frame 0 
+reading from ./tmp.bbregister.123517/template.nii...
+TR=0.00, TE=0.00, TI=0.00, flip angle=0.00
+i_ras = (0.998672, 0.024407, -0.0453629)
+j_ras = (-0.0244321, 0.999701, 0)
+k_ras = (0.0453495, 0.00110828, 0.998971)
+keeping frame 0
+writing to ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii...
+Mov determinant is 0.238419
+Swapping dims for pos det
+WARNING:: Flipping Left/Right orientation (as det < 0)
+target  volume ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii
+movable volume ./tmp.bbregister.123517/template.nii
+reg file       ./tmp.bbregister.123517/fslregister/swapreg.dat
+LoadVol        0
+ZeroCRAS       0
+7.3.2
+Diagnostic Level -1
+INFO: loading target ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii
+INFO: target does not conform to COR format, so I'm going to
+reslice to COR. This will not affect the final registration.
+Ttarg: --------------------
+-1.00000   0.00000   0.00000   128.00000;
+ 0.00000   0.00000   1.00000  -128.00000;
+ 0.00000  -1.00000   0.00000   128.00000;
+ 0.00000   0.00000   0.00000   1.00000;
+INFO: loading movable ./tmp.bbregister.123517/template.nii
+Tmov: --------------------
+-1.00000   0.00000   0.00000   96.00002;
+ 0.00000   0.00000   0.48828  -125.00000;
+ 0.00000  -0.48828   0.00000   124.99999;
+ 0.00000   0.00000   0.00000   1.00000;
+mkheaderreg = 1, float2int = 0
+Computing reg from header (and possibly input matrix)
+---- Input registration matrix (computed) --------
+-0.99867  -0.02441   0.04536   1.00001;
+ 0.04535   0.00111   0.99897   0.00000;
+ 0.02443  -0.99970  -0.00000   0.00005;
+ 0.00000   0.00000   0.00000   1.00000;
+---------------------------------------
+---- Input registration matrix --------
+-0.99867  -0.02441   0.04536   1.00001;
+ 0.04535   0.00111   0.99897   0.00000;
+ 0.02443  -0.99970  -0.00000   0.00005;
+ 0.00000   0.00000   0.00000   1.00000;
+Determinant -1
+subject = subject-unknown
+RegMat ---------------------------
+-1.00000   0.00000   0.00000   1.00002;
+-0.00000   1.00000   0.00000   0.00001;
+ 0.00000   0.00000   1.00000   0.00004;
+ 0.00000   0.00000   0.00000   1.00000;
+/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/code_to_execute_separately
+tkregister2_cmdl --mov ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii --reg ./tmp.bbregister.123517/fslregister/reg0.124338.dat --targ brainmask --fstarg --regheader --fslregout ./tmp.bbregister.123517/reg.init.dat.fsl.mat0 --s 03D6100B71 --noedit
+target  volume brainmask
+movable volume ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii
+reg file       ./tmp.bbregister.123517/fslregister/reg0.124338.dat
+LoadVol        0
+ZeroCRAS       0
+7.3.2
+Diagnostic Level -1
+INFO: loading target /data/pt_life_freesurfer/freesurfer_all/03D6100B71/mri/brainmask.mgz
+Ttarg: --------------------
+-1.00000   0.00000   0.00000   128.00000;
+ 0.00000   0.00000   1.00000  -128.00000;
+ 0.00000  -1.00000   0.00000   128.00000;
+ 0.00000   0.00000   0.00000   1.00000;
+INFO: loading movable ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii
+Tmov: --------------------
+-1.00000   0.00000   0.00000   96.00002;
+ 0.00000   0.00000   0.48828  -125.00000;
+ 0.00000  -0.48828   0.00000   124.99999;
+ 0.00000   0.00000   0.00000   1.00000;
+mkheaderreg = 1, float2int = 0
+Computing reg from header (and possibly input matrix)
+---- Input registration matrix (computed) --------
+ 0.99867   0.02441  -0.04536  -8.82639;
+ 0.04535   0.00111   0.99897   4.19345;
+ 0.02443  -0.99970  -0.00000   1.57835;
+ 0.00000   0.00000   0.00000   1.00000;
+---------------------------------------
+---- Input registration matrix --------
+ 0.99867   0.02441  -0.04536  -8.82639;
+ 0.04535   0.00111   0.99897   4.19345;
+ 0.02443  -0.99970  -0.00000   1.57835;
+ 0.00000   0.00000   0.00000   1.00000;
+Determinant 1
+subject = 03D6100B71
+RegMat ---------------------------
+ 0.99867   0.02441  -0.04536  -8.82639;
+ 0.04535   0.00111   0.99897   4.19345;
+ 0.02443  -0.99970  -0.00000   1.57835;
+ 0.00000   0.00000   0.00000   1.00000;
+FSLOUTPUTTYPE NIFTI 
+tkreg2FSL: mov det = -0.238419, ref det = -1
+Mon 15 May 2023 05:29:46 PM CEST
+/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/code_to_execute_separately
+flirt.fsl -ref ./tmp.bbregister.123517/fslregister/refvol.fslregister.nii -in ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii -bins 256 -cost corratio -dof 6 -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -verbose 0 -omat ./tmp.bbregister.123517/fslregister/fslmat0.trans.mat -schedule /afs/cbs.mpg.de/software/freesurfer/7.3.2/debian-bullseye-amd64/bin/fsl.5.0.2.xyztrans.sch -init ./tmp.bbregister.123517/reg.init.dat.fsl.mat0
+Mon 15 May 2023 05:42:36 PM CEST
+/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/code_to_execute_separately
+flirt.fsl -ref ./tmp.bbregister.123517/fslregister/refvol.fslregister.nii -in ./tmp.bbregister.123517/fslregister/movvol.fslregister.nii -bins 256 -cost corratio -dof 6 -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -verbose 0 -omat ./tmp.bbregister.123517/reg.init.dat.fsl.mat -init ./tmp.bbregister.123517/fslregister/fslmat0.trans.mat -schedule /afs/cbs.mpg.de/software/freesurfer/7.3.2/debian-bullseye-amd64/bin/flirt.newdefault.20080811.sch
