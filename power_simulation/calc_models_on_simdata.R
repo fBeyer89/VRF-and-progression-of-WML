@@ -6,19 +6,18 @@ library(car)
 lmer <- lme4::lmer
 
 setwd("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/power_simulation/") #set path to github repository here
-source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/diagnostic_fcns.r")
-source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/glmm_stability.r")
+source("../data_analysis/helper/diagnostic_fcns.r")
+source("../data_analysis/helper/glmm_stability.r")
 source('run_LME_simulation.R')
 source('simulate_data.R')
 
 
-### Simulate power curves for SBP
-# Simulation parameters -> totaling 400 simulations + 100 chains each
-# This means 1600 outcomes (effect size and p,bf bf_one_sided) for freq/bf
-n_sim = 50
-n_sample=c(1000)
-n_it=10 #chain sampling
-whr_effects=c(1.5) #, 1, 1.5,2) ##effect sizes for WHR scaling
+### Simulate power for model M1
+## Change n_sample (sample size) and WHR effect according to the level you want to test.
+n_sim = 50 # 50 samples are created
+n_sample=c(1000) #400,600,800
+n_it=10 #chain sampling for estimation of Bayesian posterior effect size
+whr_effects=c(1.5) #, 0.5, 1.5) ##effect sizes for WHR scaling
 
 #Outputs
 results_vec=vector()
@@ -144,9 +143,9 @@ sd_reff=0.5 #for normal distribution with mean 0, SD = 0.5 cm³
 sd_err=1 #for normal distribution with mean 0, SD = 1 cm³  
 
 
-for (n in n_sample){#number of subjects
+for (n in n_sample){
     
-    for (whr_effect in whr_effects){#,1,1.5,2)){#0.75,1,1.25
+    for (whr_effect in whr_effects){
 
       for (i in c(1:n_sim)){#number of simulations per condition
         #set.seed(i)
@@ -167,8 +166,7 @@ for (n in n_sample){#number of subjects
         effect_WHR_change=rnorm(n, mean=whr_effect*WHR_change, sd=whr_effect*0.001)
 
           
-        #Simulate
-        
+        #Simulate        
         dat=simncalc(n, 
                      coeffs_bl, covmatrix, usable, mean_diff_y, sd_diff_y,
                      effect_age_change, sd_age_change, effect_SBP_baseline, effect_WHR_baseline, 
@@ -241,7 +239,7 @@ freq_dat$value=rep(c("p_value", "effect_size"),n_sim)
 freq_dat$nsim=rep(c(1:n_sim),each=2)
 freq_dat$whr_effects=rep(whr_effects,each=2*n_sim)
 freq_dat$nsample=rep(n_sample, each=2*n_sim*length(whr_effects))
-write.csv(freq_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1.5/n_1000_',n_sim,'_freq.csv'))
+write.csv(freq_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1.5/n_1000_',n_sim,'_freq.csv')) #change file name accordingly
 
 bf_mat <- matrix(unlist(bf_results), byrow=T, nrow=n_sim*length(n_sample)*2*length(whr_effects))
 bf_dat=as.data.frame(bf_mat)
@@ -250,5 +248,5 @@ bf_dat$value=rep(c("bf", "one_sided_bf"),n_sim)
 bf_dat$nsim=rep(c(1:n_sim),each=2)
 bf_dat$whr_effects=rep(whr_effects,each=2*n_sim)
 bf_dat$nsample=rep(n_sample, each=2*n_sim*length(whr_effects))
-write.csv(bf_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1.5/n_1000_',n_sim,'_sim_bf.csv'))
+write.csv(bf_dat,paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/simulations/WHR_effsize_1.5/n_1000_',n_sim,'_sim_bf.csv')) #change file name accordingly
 

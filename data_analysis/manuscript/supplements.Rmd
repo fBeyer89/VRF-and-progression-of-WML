@@ -1,0 +1,662 @@
+---
+title: "Supplements for Investigating the impact of vascular risk factors on the progression of white matter hyperintensities"
+author:
+  - Frauke Beyer, PhD [1][2]
+  - Laurenz Lammer [2]
+  - Markus Loeffler [4][5]
+  - Steffi Riedel-Heller [5][6]
+  - Stéphanie Debette [1]
+  - Arno Villringer, Prof. [2][7]
+  - A. Veronica Witte, PhD [2][3][7]
+date: 1 Bordeaux Population Health Research Center, University of Bordeaux, Inserm, UMR 1219, Bordeaux, France \newline 2 Department of Neurology, Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig \newline 3 CRC 1052 "Obesity Mechanisms", Subproject A1, University of Leipzig \newline 4 Institute for Medical Informatics, Statistics and Epidemiology; University of Leipzig \newline 5 Leipzig Research Centre for Civilisation Diseases (LIFE), Leipzig \newline 6 Institute of Social Medicine, Occupational Health and Public Health, University of Leipzig , Leipzig \newline 7 Day Clinic for Cognitive Neurology, University Hospital Leipzig, University of Leipzig 
+#date: "`r format(Sys.time(), '%B %e, %Y')`"
+bookdocumentclass: article
+output: 
+  bookdown::word_document2:
+    toc: false
+    number_sections: false
+bibliography: references_2211.bib
+always_allow_html: true
+link-citations: true
+editor_options:
+  chunk_output_type: console
+header-includes:
+- \usepackage{setspace}
+- \onehalfspacing
+---
+
+```{r "Package loading", include=FALSE}
+library("lme4")
+library("lmerTest") 
+library("BayesFactor")
+library(DiagrammeR)
+# ensure that lmerTest doesn't mask lmer, which would cause us multiple problems
+lmer <- lme4::lmer
+library(broom.mixed)
+library(kableExtra)
+library(tidyverse)
+library(modelsummary)
+library(DiagrammeR)
+library(DiagrammeRsvg)
+library(magrittr)
+library(rsvg)
+library(mice)
+library(ggmice)
+library(ragg)
+library(officer)
+library(officedown)
+library(vtable)
+library(performance)
+library(huxtable)
+library(flextable)
+library(scales)
+
+setwd("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/") 
+source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/diagnostic_fcns.r")
+source("/data/gh_gr_agingandobesity_share/literature/methods/statistics/linear_models_course_rogermundry_2018/functions/glmm_stability.r")
+source('run_conf_LME.R')
+source('run_exp_LME.R')
+source('test_LME_assumptions.R')
+source("plotting/scatter_plots.R")
+```
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(cache=FALSE, echo=FALSE,
+                      message=FALSE, warning=FALSE,
+                      results='hide',fig.show='hide',
+                      fig.path='figs/',
+                      cache.path = '/data/pt_life_whm/Data/wd/Rcache/',
+                      root.dir = '/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/')
+                   
+```
+
+```{r load data}
+miceadds::load.Rdata(objname = "imp", "/data/pt_life_whm/Results/Tables/CVR_WMH_progression/imputed_data_6.12.23/imputed_data_6.12.23.Rdata")
+```
+
+\newpage
+
+# Missing data pattern
+
+```{r check imputations of DBP and WHR, eval=T, results="asis", fig.show="asis"}
+
+dat=imp$data
+ggmice::plot_pattern(
+  dat,
+  square = F,
+  rotate = TRUE
+)
+
+#nrow(dat[is.na(dat$DBP),]) #10 time points missing DBP
+#nrow(dat[is.na(dat$WHR),]) #4 time points missing WHR
+
+```
+\newpage
+
+# Comparison to a change score model
+We compared our results from the mixed effect model with the approach taken in @debette11 using change in raw WMH volume or asinh-transformed WMH volume as outcome measure in a linear model (see Table \@ref(tab:dbplinear)). In the change score model with raw WMH volume as outcome, higher DBP at baseline was associated with WMH progression, this was attenuated when using asinh-transformed WMH as outcome. Comparing the model assumptions of the original model (Figure \@ref(fig:dbpcheckmodelorig) with the change score models for raw and asinh-transformed WMH (Figures \@ref(fig:dbpcheckmodel1) and \@ref(fig:dbpcheckmodel2)), we noticed that the assumptions are not well fulfilled for the change score model.
+```{r compare to change model, cache=T}
+i=1
+comp_imp=mice::complete(imp, "long")
+tmp=comp_imp[comp_imp$.imp==i,]
+
+## compare mixed model to change model (like in Debette 2011)
+tmp = tmp %>% group_by(subj) %>%
+  mutate(wml_base = ifelse(time == "bl", wml, lag(wml)),
+                     wml_change = ifelse(time == "bl", 0, wml - wml_base))%>% 
+mutate(wml_change_y = ifelse(time == "bl", 0, wml_change/age_change))%>% 
+mutate(asinhwml_change_y = ifelse(time == "bl", 0, asinh_wml_change/age_change))
+
+tmp2=tmp[tmp$subj!=110,]
+
+#According to https://www.middleprofessor.com/files/applied-biostatistics_bookdown/_book/models-for-longitudinal-experiments-pre-post-designs.html a change score design (change ~ intervention) should give the same result as a mixed model with an intervention
+
+conv=lmerTest::lmer(formula = 'asinh_wml ~ age_base + age_change + 
+                                 DBP_base + age_change:DBP_base + DBP_change  + 
+                                 WHR_base + WHR_base:age_change + WHR_change + 
+                                 sex + BPmed + TIV + (1|subj)',REML=F, na.action = na.omit,data=tmp)
+red=lmerTest::lmer(formula = 'asinh_wml ~ age_base + age_change + 
+                                 DBP_base + age_change:DBP_base + DBP_change  + 
+                                 sex + BPmed + TIV + (1|subj)',REML=F, na.action = na.omit,data=tmp)
+
+#does not work because not count data
+#glmered=lme4::glmer(formula = 'wml ~ age_base + age_change + 
+#                                 DBP_base + age_change:DBP_base + DBP_change  + 
+#                                 sex + BPmed + TIV + (1|subj)', family=poisson, data=tmp2)
+
+rob=robustlmm::rlmer(formula = 'wml ~ age_base + age_change + 
+                                 DBP_base + age_change:DBP_base + DBP_change  + 
+                                 sex + BPmed + TIV + (1|subj)',data=tmp)
+
+#-> only change in DBP is significant, but not DBP baseline
+#-> check_model results look good
+
+#cross dataframe
+tmp_cross=data.frame(wml_change_y=tmp[tmp$time=="fu","wml_change_y"]$wml_change_y,
+                     wml_change=tmp[tmp$time=="fu",]$wml_change,
+                     asinh_wml_change_y=tmp[tmp$time=="fu",]$asinhwml_change_y,
+                     log_wml_change_y=log(1+tmp[tmp$time=="fu","wml_change_y"]$wml_change_y),
+                     subj=tmp[tmp$time=="fu",]$subj,
+                     age_bl=tmp[tmp$time=="bl",]$age,
+                     dbp_bl=tmp[tmp$time=="bl",]$DBP,
+                     dbp_change=tmp[tmp$time=="fu",]$DBP_change,
+                     sex=tmp[tmp$time=="bl",]$sex,
+                     TIV=tmp[tmp$time=="bl",]$TIV,
+                     wml_base=tmp[tmp$time=="bl",]$wml_base,
+                     timebet=tmp[tmp$time=="fu",]$age_change,
+                     BPmed=tmp[tmp$time=="bl",]$BPmed)
+
+#DBP is associated with wml change score, but residuals look bad
+resdeb_bl=lm(wml_change~age_bl+sex+dbp_bl+timebet+BPmed+TIV, data=tmp_cross)
+#summary(resdeb_bl)
+#check_model(resdeb_bl)
+
+#both baseline and change in DBP is associated with wml change score
+
+
+#dbp change is much more strongly associated than dbp baseline, residuals look better but still zero inflation
+#summary(resdeb_change_asinh)
+#check_model(resdeb_change_asinh)
+
+#ggplot(aes(x=dbp_change, y=wml_change_y),data=tmp_cross)+geom_point()+geom_smooth(method="lm")
+#ggplot(aes(x=dbp_bl, y=wml_change_y),data=tmp_cross)+geom_point()+geom_smooth(method="lm")
+
+#Conclusion:
+#Analysing the data with a linear model using change is not equivalent to using the interaction in this case, probably because the change is not normally distributed but has a high number of zeros and is skewed.
+```
+\newpage
+```{r dbplinear, results="asis"}
+resdeb_change_tot=lm(wml_change~1, data=tmp_cross)
+resdeb_change_timebet=lm(wml_change~timebet, data=tmp_cross)
+resdeb_change=lm(wml_change~age_bl+sex+dbp_bl+dbp_change+timebet+BPmed+TIV, data=tmp_cross)
+resdeb_change_asinh=lm(asinh_wml_change_y~age_bl+sex+dbp_bl+dbp_change+timebet+BPmed+TIV, data=tmp_cross)
+
+cm <- c('age_bl'    = 'Age at baseline',
+        'timebet'    = 'Time between baseline and followup',
+        "dbp_bl" = "DBP at baseline baseline",
+        "dbp_change" = "Change in DBP"
+        )
+tab<-modelsummary(
+  list(resdeb_change,resdeb_change_asinh),
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = '.*')
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p", "(2) / Est.","(2) / p"),
+  label = c("", "Raw WMH: Estimate \n[95 % CI]", "Raw WMH: p-value",
+             "asinh WMH: Estimate \n[95 % CI]", "asinh WMH: p-value")
+)
+
+tab=tab %>% set_caption("Results for DBP baseline and change from linear models using change in raw WMH or asinh-transformed WMH as outcome")%>% set_header_df(mapping = ref_table, key = "key")%>%   set_table_properties(layout = "autofit", width = .8)
+tab
+```
+
+
+```{r, echo=FALSE}
+block_section(
+  prop_section(
+    page_size = page_size(orient = "portrait"),
+    type = "continuous"
+  )
+)
+```
+```{r create dbpcheckmodel}
+check_model(resdeb_change)
+ggsave(filename = '/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/checkmodel_WMH.png', width = 15, height = 20, unit="cm", dpi=300)
+check_model(resdeb_change_asinh)
+ggsave(filename = '/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/checkmodel_asinWMH.png', width = 15, height = 20, unit="cm", dpi=300)
+```
+
+\newpage
+
+```{r dbpcheckmodelorig, echo=FALSE, fig.align = "center",out.width="85%", fig.show='asis', results='asis', fig.cap="Assumptions of linear model for the original model M1 (from the package check_model)"}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/orig_asinWMH.png")
+```
+
+\newpage
+
+```{r dbpcheckmodel1, echo=FALSE, fig.align = "center",out.width="85%", fig.show='asis', results='asis', fig.cap="Assumptions of linear model for the change score model using raw WMH volume as outcome (from the package check_model)"}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/checkmodel_WMH.png")
+```
+
+\newpage
+
+```{r dbpcheckmodel2, echo=FALSE, fig.align = "center",out.width="85%", fig.show='asis', results='asis', fig.cap="Assumptions of linear model for the change score model using asinh-transformed WMH volume as outcome (from the package check_model)"}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/checkmodel_asinWMH.png")
+```
+
+```{r, echo=FALSE}
+block_section(
+  prop_section(
+    page_size = page_size(orient = "landscape"),
+    type = "continuous"
+  )
+)
+```
+\newpage
+
+# Assumptions for models M2 and M3
+```{r assu2, echo=FALSE, fig.align = "center",out.width="85%", fig.show='asis', results='asis', fig.cap="Assumptions of linear model for them model M2 (executive function)(from the package check_model)"}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/orig_exec.png")
+```
+
+```{r assu3, echo=FALSE, fig.align = "center",out.width="85%", fig.show='asis', results='asis', fig.cap="Assumptions of linear model for them model M3 (global cognitive function)(from the package check_model)"}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/orig_gc.png")
+```
+
+```{r plot imputation results for DBP, eval=T}
+comp_imp=mice::complete(imp, "long")
+test=comp_imp[comp_imp$.imp==1,]
+
+imp_cases=subset(test, subj %in% dat[is.na(dat$DBP),"subj"])
+#imputation worked properly (producing different values for each time point)
+ggplot(data=imp_cases, aes(x = time, y = DBP, group = subj)) + geom_point() + geom_line()
+
+#five imputed datapoints are shown
+ggmice(data = imp, aes(x = age, y = DBP, group = subj, shape=time)) + geom_point() + geom_line()
+
+```
+\newpage
+
+```{r calculate trends, eval=T}
+dat <- dat %>%
+  group_by(subj) %>%
+  mutate(
+    trend_asinh_wml = ifelse(time == "bl" & lead(asinh_wml) >  asinh_wml, "increase", "decrease"),
+    trend_asinh_wml = ifelse(time == "bl" & lead(asinh_wml) ==  asinh_wml, "unchanged", trend_asinh_wml),
+    trend_asinh_wml = ifelse(time == "fu", lag(trend_asinh_wml), trend_asinh_wml)
+  )%>%
+  mutate(
+    trend_DBP = ifelse(time == "bl" & lead(DBP) >  DBP, "increase", "decrease"),
+    trend_DBP = ifelse(time == "bl" & lead(DBP) ==  DBP, "unchanged", trend_DBP),
+    trend_DBP = ifelse(time == "fu", lag(trend_DBP), trend_DBP)
+  )%>%
+  mutate(
+    trend_WHR = ifelse(time == "bl" & lead(WHR) >  WHR, "increase", "decrease"),
+    trend_WHR = ifelse(time == "bl" & lead(WHR) ==  WHR, "unchanged", trend_WHR),
+    trend_WHR = ifelse(time == "fu", lag(trend_WHR), trend_WHR)
+  )
+
+dat= dat%>%
+  group_by(subj) %>%
+  mutate(
+    BPmed_change = case_when(time == "bl" & BPmed==0 & lead(BPmed)==0 ~ "no treatment", 
+                             time == "bl" & BPmed==0 & is.na(lead(BPmed)) ~ "no treatment at baseline, fu unknown", 
+                             time == "bl" & is.na(BPmed) & lead(BPmed)==1 ~ "unknown at baseline, treatment at fu",
+                             time == "bl" & BPmed==0 & lead(BPmed)==1 ~  "start treatment",
+                             time == "bl" & BPmed==1 & lead(BPmed)==0 ~  "revoke treatment",
+                             
+                             time == "bl" & BPmed==1 & lead(BPmed)==1 ~  "all treatment"))%>%
+  mutate(BPmed_change= ifelse(time == "fu", lag(BPmed_change),BPmed_change))
+                             
+
+```
+```{r plot trends DBP age, fig.show=F, eval=F}
+dat = dat %>% mutate(agebin = case_when(age_base<quantile(dat$age_base)[2] ~ 1,
+                                        age_base>quantile(dat$age_base)[4] ~ 3,
+                                        (age_base>=quantile(dat$age_base)[2] & age_base<=quantile(age_base)[4])~ 2))
+
+ggplot(data = dat, aes(x = age, y=DBP, group=subj, color=trend_DBP)) + geom_point() + geom_line() + facet_grid(~agebin)
+```
+
+\newpage
+
+```{r plot WMH trend,eval=T}
+#ggplot(data = dat, aes(x = age, y=asinh_wml, group=subj, color=trend_asinh_wml)) + geom_point() + geom_line() + facet_grid(~agebin) 
+ggplot(data = dat, aes(x = age, y=DBP, group=subj, color=trend_DBP)) + geom_point(aes(shape=time), size=2) + geom_line() +
+  xlab("Age in years") + ylab("DBP in mmHg")+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        legend.text=element_text(size=12))+
+ labs(shape="Time point", color="DBP change")
+ggsave(filename = '/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/DBP_Age_progression.png', width = 20, height = 15, unit="cm", dpi=300)
+
+
+ggplot(data = dat, aes(x = DBP, y=asinh_wml, group=subj, color=trend_DBP)) + geom_point(aes(shape=time), size=2) + geom_line() +
+  xlab("DBP in mmHg") + ylab("Asinh-transformed WMH volume") +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        legend.text=element_text(size=12))+
+ labs(shape="Time point", color="DBP change")
+ggsave(filename = '/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/DBP_WMH_progression.png', width = 20, height = 15, unit="cm", dpi=300)
+```
+
+\newpage
+
+```{r dbptrend1, echo=FALSE, fig.align = "center",out.width="85%", fig.show="asis", results="asis", fig.cap="Age and DBP in Life-Adult. Colors indicate increase/stable/decrease in DBP over time."}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/DBP_Age_progression.png")
+```
+
+\newpage
+
+```{r dbptrend2, echo=FALSE, fig.align = "center",out.width="85%", fig.show="asis", results="asis", fig.cap="DBP and asinh-transformed WMH in Life-Adult. Colors indicate increase/stable/decrease in DBP over time."}
+knitr::include_graphics("/data/pt_life_whm/Analysis/VRF-and-progression-of-WML/data_analysis/manuscript/figures/DBP_WMH_progression.png")
+```
+
+
+```{r calculate WHR/BP change, eval=F}
+ggplot(data = dat, aes(x = age, y=DBP, group=subj, color=BPmed_change)) + geom_point() + geom_line()
+
+ggplot(data = dat, aes(x = age, y=WHR, group=subj, color=trend_WHR)) + geom_point() + geom_line()
+
+```
+
+```{r DBP change outliers, eval=F, fig.show=F}
+subjs=dat[dat$DBP_change<(-20)&!is.na(dat$DBP_change),"subj"]
+dat[dat$subj==subjs$subj[3], c("subj", "time", "DBP", "BPmed")]
+
+dat[dat$subj==590, c("subj", "time", "DBP_change", "BPmed")]
+ggplot(data = dat, aes(x = age, y=DBP, group=subj, color=BPmed)) + geom_point() + geom_line()
+```
+\newpage
+
+# Interaction Models
+```{r tableE2a_sex, echo=FALSE}
+model="E2a_sex"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+fp_for_text=summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Gender (males=1)",
+        "age_change:sex" = "Interaction of time and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline")
+tab=modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = 'Num.Obs.|Num.Imp.')
+
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p"),
+  label = c("", "Estimate [95 % CI]", "p-value")
+)
+
+tab=tab %>% set_caption("Interaction of gender and WMH progression ")%>% set_header_df(mapping = ref_table, key = "key")%>% autofit()
+   
+```
+
+```{r E2asexres, results='show', echo=FALSE}
+tab
+```
+
+\newpage
+
+```{r M2a_sex_forestplot, eval=TRUE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, "M2a_sex_forest.png"))
+```
+```{r M2a_sex_scatterplot, eval=TRUE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.png"), width = 12, height=5)
+```
+
+\newpage
+
+#### E2aa: Gender and DBP change interaction (new exploratory analysis)
+```{r tableE2a_DBP_change_sex, echo=FALSE}
+model="E2a_sex_DBP_change"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+fp_for_text=summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Gender (males=1)",
+        "DBP_change:sex" = "Interaction of DBP change and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline")
+tab<-modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = 'Num.Obs.|Num.Imp.')
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p"),
+  label = c("", "Estimate [95 % CI]", "p-value")
+)
+
+tab=tab %>% set_caption("Interaction of DBP change and gender on WMH progression ")%>% set_header_df(mapping = ref_table, key = "key")%>% autofit()
+   
+```
+
+```{r E2aDBPchangesexres, results='show', echo=FALSE}
+tab
+```
+
+
+```{r E2aa_sex_DBP_change_forestplot, eval=TRUE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, model, "_forest.png"))
+```
+```{r E2aa_sex_DBP_change_scatterplot, eval=TRUE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.png"), width = 12, height=5)
+```
+\newpage
+
+#### E2a: Gender and baseline DBP interaction on WML progression
+```{r tableE2b_DBP_sex, echo=FALSE}
+model="E2b_DBP"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+fp_for_text=summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Gender (males=1)",
+        "sex:DBP_base" = "Interaction of DBP and gender",
+        "age_change:sex" = "Interaction of time and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        "age_change:sex:DBP_base" = "Gender differences of time x DBP at baseline")
+tab<-modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = 'Num.Obs.|Num.Imp.')
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p"),
+  label = c("", "Estimate [95 % CI]", "p-value")
+)
+
+tab=tab %>% set_caption("Interaction of DBP baseline, age and gender on WML progression ")%>% set_header_df(mapping = ref_table, key = "key")%>% autofit()
+   
+```
+
+```{r E2bDBPsexres, results='show', echo=FALSE}
+tab
+```
+
+
+
+```{r E2b_DBP_sex_forestplot, eval=TRUE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, model, "_forest.png"))
+```
+```{r E2b_DBP_sex_scatterplot2, eval=TRUE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.png"), width = 12, height=5)
+```
+
+\newpage
+
+####  E2c: Interaction of gender and baseline WHR on WMH progression
+```{r tableE2c_WHR_sex, echo=FALSE}
+model="E2c_WHR"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+fp_for_text=summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "DBP_base" = "Diastolic BP at baseline",
+        "DBP_change" = "Change in diastolic BP",
+        "WHR_base" = "Waist-to-hip ratio at baseline",
+        "WHR_change" = "Change in WHR",
+        "sex" = "Gender (males=1)",
+        "sex:WHR_base" = "Interaction of WHR and gender",
+        "age_change:sex" = "Interaction of time and gender",
+        "age_change:DBP_base" = "Interaction of time and DBP at baseline",
+        "age_change:WHR_base" = "Interaction of time and WHR at baseline",
+        "age_change:sex:WHR_base" = "Gender differences of time x WHR at baseline")
+tab<-modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = 'Num.Obs.|Num.Imp.')
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p"),
+  label = c("", "Estimate [95 % CI]", "p-value")
+)
+
+tab=tab %>% set_caption("Interaction of gender and baseline WHR on WMH progression ")%>% set_header_df(mapping = ref_table, key = "key")%>% autofit()
+   
+```
+
+```{r E2cWHRsexres, results='show', echo=FALSE}
+tab
+```
+
+
+```{r E2b_DBP_sex_forestplot2, eval=TRUE}
+modelplot(fp, coef_omit = 'Intercept', coef_map=cm, size = 0.5, fatten = .7, color = 'black', linetype = 'solid') 
+ggsave(paste0(wd, model, "_forest.png"))
+```
+```{r E2b_DBP_sex_scatterplot, eval=TRUE}
+p2<-comp_plot("M3_globalcog","asinh_wml_change")
+p1<-comp_plot("M3_globalcog","asinh_wml_base")
+plots <- plot_grid(p1, p2,ncol = 2, nrow = 1) 
+plots
+ggsave(paste0(wd, "M2a_sex_scatter.png"), width = 12, height=5)
+```
+\newpage
+
+#### E3a: Interaction of gender and WMH progression on executive cognitive function 
+```{r tableE3a_exfunct_sex, echo=FALSE}
+model="E3a_exfunct"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+fp_for_text=summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "asinh_wml_base" = "Asinh-transformed WMH volume baseline",
+        "asinh_wml_change" = "Change in Asinh-transformed WMH volume",
+        "sex" = "Gender (males=1)",
+        "asinh_wml_change:sex" = "Interaction of gender and Asinh-transformed WMH change")
+tab<-modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = 'Num.Obs.|Num.Imp.')
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p"),
+  label = c("", "Estimate [95 % CI]", "p-value")
+)
+
+tab=tab %>% set_caption("Interaction of WMH progression and gender on executive function")%>% set_header_df(mapping = ref_table, key = "key")%>%   set_table_properties(layout = "autofit", width = .8)
+   
+```
+
+```{r E3aexfunctsexres, results='show', echo=FALSE}
+tab
+```
+
+```{r tableE3b_globalcog, echo=FALSE}
+model="E3b_globalcog"
+wd="/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/"
+load(paste0(wd,"workspace_",model,"_freq_imp_res.RData"))
+fp=mice::pool(res)
+fp_for_text=summary(fp)
+cm <- c('age_base'    = 'Age at baseline',
+        'age_change'    = 'Time between baseline and followup',
+        "asinh_wml_base" = "Asinh-transformed WMH volume baseline",
+        "asinh_wml_change" = "Change in Asinh-transformed WMH volume",
+        "sex" = "Gender (males=1)",
+        "asinh_wml_change:sex" = "Interaction of gender and Asinh-transformed WMH change")
+tab<-modelsummary(
+  fp,
+  fmt = 3,
+  shape = term ~ model + statistic,
+  estimate  = "{estimate} [{conf.low}, {conf.high}]",
+  statistic = "{p.value}",
+  coef_omit = "Intercept", 
+  coef_map = cm,
+  output = 'flextable',
+  gof_omit = 'Num.Obs.|Num.Imp.')
+
+ref_table <- data.frame(
+  key = c(" ","(1) / Est.","(1) / p"),
+  label = c("", "Estimate [95 % CI]", "p-value")
+)
+
+tab=tab %>% set_caption("Interaction of gender and WMH progression on general cognitive function")%>% set_header_df(mapping = ref_table, key = "key")%>%   set_table_properties(layout = "autofit", width = .8)
+   
+```
+
+```{r E3bglobalcogres, results='show', echo=FALSE}
+tab
+```
+
+\newpage
+
+# References

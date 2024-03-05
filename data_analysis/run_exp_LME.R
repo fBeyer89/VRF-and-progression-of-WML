@@ -1,4 +1,4 @@
-run_exp_LME<- function(imp, model, n_it){
+run_exp_LME<- function(imp, model, n_it, outdir='/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_'){
   # Calculates exploratory models results for a MIDS (Multiply Imputed Data Set) from mice.
   # Model can take values "E2a_sex", "E2b_DBP", "E2c_WHR", "E3_exfunct" and "E3_globalcog".
   
@@ -14,7 +14,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex + BPmed + TIV + (1|subj)'),
                 REML=F, na.action = na.omit)
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0(outdir,model, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'asinh_wml ~ age_base + age_change + 
                                  age_change:sex +
@@ -22,7 +22,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  WHR_base + WHR_base:age_change + WHR_change + 
                                  sex + BPmed + TIV + (1|subj)'),
                  REML=F, na.action = na.omit)
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0(outdir,model, '_freq_imp_plot', '.RData'))
   }
   if (model == "E2a_sex_DBP_change"){
     res <- with(imp, lmerTest::lmer(formula = 'asinh_wml ~ age_base + age_change + 
@@ -32,7 +32,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex + BPmed + TIV + (1|subj)'),
                 REML=F, na.action = na.omit)
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0(outdir,model, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'asinh_wml ~ age_base + age_change + 
                                  DBP_change:sex +
@@ -40,7 +40,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  WHR_base + WHR_base:age_change + WHR_change + 
                                  sex + BPmed + TIV + (1|subj)'),
                  REML=F, na.action = na.omit)
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0(outdir,model, '_freq_imp_plot', '.RData'))
   }
   if (model == "E2b_DBP"){
     res <- with(imp, lmerTest::lmer(formula = 'asinh_wml ~ age_base + age_change + 
@@ -52,7 +52,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex + BPmed + TIV + (1|subj)',
                 REML=F, na.action = na.omit))
     est=summary(mice::pool(res))    
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0(outdir,model, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'asinh_wml ~ age_base + age_change + 
                                    age_change:sex +
@@ -62,7 +62,7 @@ run_exp_LME<- function(imp, model, n_it){
                                    WHR_base + age_change:WHR_base + WHR_change + 
                                    sex + BPmed + TIV + (1|subj)',
                  REML=F, na.action = na.omit))
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0(outdir,model, '_freq_imp_plot', '.RData'))
   }
   if (model == "E2c_WHR"){
     res <- with(imp, lmerTest::lmer(formula = 'asinh_wml ~ age_base + age_change + 
@@ -74,7 +74,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex + BPmed + TIV + (1|subj)', 
                 REML=F, na.action = na.omit))
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0(outdir,model, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'asinh_wml ~ age_base + age_change + 
                                  age_change:sex +
@@ -84,7 +84,7 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex:WHR_base + sex:age_change:WHR_base +
                                  sex + BPmed + TIV + (1|subj)',
                                  REML=F, na.action = na.omit))
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0(outdir,model, '_freq_imp_plot', '.RData'))
   }
   if (model == "E3a_exfunct"){
     res <- with(imp, lmerTest::lmer(formula = 'exfunct ~ age_base + age_change + 
@@ -93,14 +93,14 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex + education + cesd + TIV + (1|subj)',
                 REML=F, na.action = na.omit))
     est=summary(mice::pool(res))
-    save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_res', '.RData'))
+    save(res,file=paste0(outdir,model, '_freq_imp_res', '.RData'))
     #recalculate model with lme4 as to use effect for effect prediction
     plot <- with(imp, lme4::lmer(formula = 'exfunct ~ age_base + age_change + 
                                  asinh_wml_change:sex +
                                  asinh_wml_base + asinh_wml_change + 
                                  sex + education + cesd + TIV + (1|subj)',
                                  REML=F, na.action = na.omit))
-    save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_plot', '.RData'))
+    save(plot,file=paste0(outdir,model, '_freq_imp_plot', '.RData'))
   }
   if (model == "E3b_globalcog"){
     res <- with(imp, lmerTest::lmer(formula = 'globalcog ~ age_base + age_change + 
@@ -109,14 +109,14 @@ run_exp_LME<- function(imp, model, n_it){
                                  sex + education + cesd + TIV + (1|subj)',
                    REML=F, na.action = na.omit))
   est=summary(mice::pool(res))
-  save(res,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_res', '.RData'))
+  save(res,file=paste0(outdir,model, '_freq_imp_res', '.RData'))
   #recalculate model with lme4 as to use effect for effect prediction
   plot <- with(imp, lme4::lmer(formula = 'globalcog ~ age_base + age_change + 
                                  asinh_wml_change:sex + 
                                  asinh_wml_base + asinh_wml_change + 
                                  sex + education + cesd + TIV + (1|subj)',
                                REML=F, na.action = na.omit))
-  save(plot,file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_freq_imp_plot', '.RData'))
+  save(plot,file=paste0(outdir,model, '_freq_imp_plot', '.RData'))
   }
   
   
@@ -166,7 +166,7 @@ run_exp_LME<- function(imp, model, n_it){
       }
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0(outdir,model, '_imp_',i, '.RData'))
     }
     
     bf_df=as.data.frame(bf)
@@ -209,7 +209,7 @@ run_exp_LME<- function(imp, model, n_it){
       }
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0(outdir,model, '_imp_',i, '.RData'))
     }
     
     bf_df=as.data.frame(bf)
@@ -272,7 +272,7 @@ run_exp_LME<- function(imp, model, n_it){
       }
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0(outdir,model, '_imp_',i, '.RData'))
     }
     
     bf_df=as.data.frame(bf)
@@ -335,7 +335,7 @@ run_exp_LME<- function(imp, model, n_it){
       }
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0(outdir,model, '_imp_',i, '.RData'))
     }
     
     bf_df=as.data.frame(bf)
@@ -394,7 +394,7 @@ run_exp_LME<- function(imp, model, n_it){
       }
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0(outdir,model, '_imp_',i, '.RData'))
     }
     
     bf_df=as.data.frame(bf)
@@ -453,7 +453,7 @@ run_exp_LME<- function(imp, model, n_it){
       }
       list2save=list(tmp_bf,chains, bf_extracted)
       save(list2save, 
-           file=paste0('/data/pt_life_whm/Results/VRF_cSVD/LME/results/Expl/workspace_',model, '_imp_',i, '.RData'))
+           file=paste0(outdir,model, '_imp_',i, '.RData'))
     }
     
     bf_df=as.data.frame(bf)
