@@ -1,5 +1,6 @@
 # Create synthetic data for publication
 library(mice)
+library(dplyr)
 library(miceadds)
 
 
@@ -66,6 +67,11 @@ imp <- mice::mice(
 #See results
 plot(imp)
 
+#make original data all NA so that individuals cannot be identified
+tmp_impdata=imp$data
+tmp_impdata[,c(3:ncol(tmp_impdata))]=NA
+imp$data=tmp_impdata
+
 #Check the imputed data
 imp_l <- mice::complete(imp, action = 'long', include = TRUE) #include = TRUE option to be able to save to mids later
 
@@ -87,9 +93,14 @@ imp_l <- imp_l %>%
     asinh_wml_base = ifelse(time == "bl", asinh_wml, lag(asinh_wml)),
     asinh_wml_change = ifelse(time == "bl", 0, asinh_wml - asinh_wml_base))
 
+
+
 imp.itt <- mice::as.mids(imp_l)
 
 
 #write full dataset
 setwd("/data/pt_life_whm/Results/VRF_cSVD/imputed_data/")
 miceadds::write.mice.imputation(imp.itt , "synthetic_imputed_data", mids2spss=FALSE)
+
+
+imp_l_NA <- mice::complete(imp.itt, action = 'long', include = FALSE)

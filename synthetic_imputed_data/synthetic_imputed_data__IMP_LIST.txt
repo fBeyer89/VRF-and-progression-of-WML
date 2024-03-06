@@ -1,0 +1,5 @@
+synthetic_imputed_data__IMPDATA1.dat
+synthetic_imputed_data__IMPDATA2.dat
+synthetic_imputed_data__IMPDATA3.dat
+synthetic_imputed_data__IMPDATA4.dat
+synthetic_imputed_data__IMPDATA5.dat

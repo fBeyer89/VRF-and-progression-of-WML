@@ -1,0 +1,145 @@
+2024-03-06 09:23:46 
+
+ /data/pt_life_whm/Results/VRF_cSVD/imputed_data/synthetic_imputed_data 
+
+Class: mids
+Number of multiple imputations:  5 
+Imputation methods:
+            subj             time              age              sex        education              TIV 
+              ""               ""            "pmm"            "pmm"            "pmm"            "pmm" 
+             wml              DBP              WHR        globalcog            BPmed             cesd 
+           "pmm"            "pmm"            "pmm"            "pmm"            "pmm"            "pmm" 
+        age_base         DBP_base         WHR_base       age_change       DBP_change       WHR_change 
+           "pmm"            "pmm"            "pmm"               ""               ""               "" 
+       asinh_wml   asinh_wml_base asinh_wml_change 
+           "pmm"            "pmm"               "" 
+PredictorMatrix:
+          subj time age sex education TIV wml DBP WHR globalcog BPmed cesd age_base DBP_base WHR_base age_change
+subj         0    1   1   1         1   1   1   1   1         1     1    1        1        1        1          0
+time         1    0   1   1         1   1   1   1   1         1     1    1        1        1        1          0
+age          1    1   0   1         1   1   1   1   1         1     1    1        1        1        1          0
+sex          1    1   1   0         1   1   1   1   1         1     1    1        1        1        1          0
+education    1    1   1   1         0   1   1   1   1         1     1    1        1        1        1          0
+TIV          1    1   1   1         1   0   1   1   1         1     1    1        1        1        1          0
+          DBP_change WHR_change asinh_wml asinh_wml_base asinh_wml_change
+subj               0          0         1              1                0
+time               0          0         1              1                0
+age                0          0         1              1                0
+sex                0          0         1              1                0
+education          0          0         1              1                0
+TIV                0          0         1              1                0
+Number of logged events:  4 
+  it im dep     meth              out
+1  0  0     constant       age_change
+2  0  0     constant       DBP_change
+3  0  0     constant       WHR_change
+4  0  0     constant asinh_wml_change
+Class: mids
+Number of multiple imputations:  5 
+Imputation methods:
+            subj             time              age              sex        education              TIV 
+              ""               ""            "pmm"            "pmm"            "pmm"            "pmm" 
+             wml              DBP              WHR        globalcog            BPmed             cesd 
+           "pmm"            "pmm"            "pmm"            "pmm"            "pmm"            "pmm" 
+        age_base         DBP_base         WHR_base       age_change       DBP_change       WHR_change 
+           "pmm"            "pmm"            "pmm"               ""               ""               "" 
+       asinh_wml   asinh_wml_base asinh_wml_change 
+           "pmm"            "pmm"               "" 
+PredictorMatrix:
+          subj time age sex education TIV wml DBP WHR globalcog BPmed cesd age_base DBP_base WHR_base age_change
+subj         0    1   1   1         1   1   1   1   1         1     1    1        1        1        1          0
+time         1    0   1   1         1   1   1   1   1         1     1    1        1        1        1          0
+age          1    1   0   1         1   1   1   1   1         1     1    1        1        1        1          0
+sex          1    1   1   0         1   1   1   1   1         1     1    1        1        1        1          0
+education    1    1   1   1         0   1   1   1   1         1     1    1        1        1        1          0
+TIV          1    1   1   1         1   0   1   1   1         1     1    1        1        1        1          0
+          DBP_change WHR_change asinh_wml asinh_wml_base asinh_wml_change
+subj               0          0         1              1                0
+time               0          0         1              1                0
+age                0          0         1              1                0
+sex                0          0         1              1                0
+education          0          0         1              1                0
+TIV                0          0         1              1                0
+Number of logged events:  4 
+  it im dep     meth              out
+1  0  0     constant       age_change
+2  0  0     constant       DBP_change
+3  0  0     constant       WHR_change
+4  0  0     constant asinh_wml_change
+
+
+
+To cite R in publications use:
+
+  R Core Team (2022). R: A language and environment for statistical computing. R Foundation for
+  Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2022},
+    url = {https://www.R-project.org/},
+  }
+
+We have invested a lot of time and effort in creating R, please cite it when using it for data analysis.
+See also ‘citation("pkgname")’ for citing R packages.
+
+
+To cite mice in publications use:
+
+  Stef van Buuren, Karin Groothuis-Oudshoorn (2011). mice: Multivariate Imputation by Chained Equations
+  in R. Journal of Statistical Software, 45(3), 1-67. DOI 10.18637/jss.v045.i03.
+
+A BibTeX entry for LaTeX users is
+
+  @Article{,
+    title = {{mice}: Multivariate Imputation by Chained Equations in R},
+    author = {Stef {van Buuren} and Karin Groothuis-Oudshoorn},
+    journal = {Journal of Statistical Software},
+    year = {2011},
+    volume = {45},
+    number = {3},
+    pages = {1-67},
+    doi = {10.18637/jss.v045.i03},
+  }
+
+                                sysname                                 release 
+                                "Linux"                       "5.10.0-28-amd64" 
+                                version                                nodename 
+"#1 SMP Debian 5.10.209-2 (2024-01-31)"                            "comps08h04" 
+                                machine                                   login 
+                               "x86_64"                                "fbeyer" 
+                                   user                          effective_user 
+                               "fbeyer"                                "fbeyer" 
+R version 4.2.2 (2022-10-31)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Debian GNU/Linux 11 (bullseye)
+
+Matrix products: default
+BLAS:   /afs/cbs.mpg.de/software/r/4.2.2/debian-bullseye-amd64/lib/R/lib/libRblas.so
+LAPACK: /afs/cbs.mpg.de/software/r/4.2.2/debian-bullseye-amd64/lib/R/lib/libRlapack.so
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8    LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] dplyr_1.1.1      miceadds_3.16-18 mice_3.15.0     
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.11       nloptr_2.0.3      cellranger_1.1.0  pillar_1.9.0      compiler_4.2.2    tools_4.2.2      
+ [7] boot_1.3-28       digest_0.6.33     lme4_1.1-32       nlme_3.1-160      evaluate_0.23     lifecycle_1.0.4  
+[13] tibble_3.2.1      lattice_0.20-45   pkgconfig_2.0.3   rlang_1.1.1       Matrix_1.5-4      cli_3.6.1        
+[19] DBI_1.1.3         rstudioapi_0.15.0 yaml_2.3.7        xfun_0.40         fastmap_1.1.1     withr_2.5.2      
+[25] knitr_1.45        generics_0.1.3    vctrs_0.6.4       mitools_2.4       grid_4.2.2        tidyselect_1.2.0 
+[31] glue_1.6.2        R6_2.5.1          fansi_1.0.5       readxl_1.4.3      rmarkdown_2.24    minqa_1.2.5      
+[37] purrr_1.0.2       tidyr_1.3.0       magrittr_2.0.3    MASS_7.3-58.1     backports_1.4.1   htmltools_0.5.7  
+[43] splines_4.2.2     utf8_1.2.3        broom_1.0.5      
